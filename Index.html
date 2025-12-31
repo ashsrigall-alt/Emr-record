@@ -2,17 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Clinic EMR – Multi-Medicine OPD</title>
+<title>Clinic EMR – OPD</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body{font-family:Arial,Helvetica,sans-serif;background:#eef1f5;margin:0}
 header{background:#083d77;color:#fff;padding:15px;text-align:center}
 .container{padding:15px;max-width:1200px;margin:auto}
-.card{background:#fff;padding:15px;margin-bottom:15px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-radius:8px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1)}
 label{font-weight:bold;margin-top:8px;display:block}
-input,select,textarea{width:100%;padding:10px;margin-top:4px;font-size:16px}
-button{background:#083d77;color:#fff;border:none;padding:12px 20px;border-radius:6px;margin-top:10px;font-size:16px;cursor:pointer}
+input,select{width:100%;padding:10px;margin-top:4px;font-size:16px}
+button{background:#083d77;color:#fff;border:none;padding:12px 20px;
+       border-radius:6px;margin-top:12px;font-size:16px;cursor:pointer}
 button.secondary{background:#555}
 .flex{display:flex;gap:10px;flex-wrap:wrap}
 .flex>div{flex:1;min-width:140px}
@@ -28,7 +30,7 @@ li{margin-bottom:6px}
 <body>
 <header>
 <h2>Clinic / Hospital EMR</h2>
-<p>Offline • Secure • OPD Optimized</p>
+<p>Offline • OPD Optimized</p>
 </header>
 
 <div class="container">
@@ -40,7 +42,7 @@ li{margin-bottom:6px}
 <div class="flex">
   <div>
     <label>Patient Name *</label>
-    <input id="name" autocomplete="off">
+    <input id="patientName" autocomplete="off">
   </div>
   <div>
     <label>Mobile</label>
@@ -77,7 +79,7 @@ li{margin-bottom:6px}
 
 <ul id="medList"></ul>
 
-<button onclick="saveRecord()">Save Visit</button>
+<button type="button" onclick="saveRecord()">Save Visit</button>
 </div>
 
 <!-- ================= RECORDS ================= -->
@@ -92,13 +94,8 @@ li{margin-bottom:6px}
 <table>
 <thead>
 <tr>
-<th>OPD</th>
-<th>Date</th>
-<th>Name</th>
-<th>Mobile</th>
-<th>Age</th>
-<th>Dx</th>
-<th>Rx</th>
+<th>OPD</th><th>Date</th><th>Name</th><th>Mobile</th>
+<th>Age</th><th>Dx</th><th>Rx</th>
 <th class="no-print">Print</th>
 </tr>
 </thead>
@@ -109,19 +106,17 @@ li{margin-bottom:6px}
 </div>
 
 <script>
-/* ========== MEDICINE MASTER ========== */
+/* ========= MEDICINE MASTER ========= */
 const meds=[
-"Paracetamol","Combiflam","Pantoprazole","Etoricoxib","Amoxiclav","Azithromycin",
-"Cefixime","Doxycycline","Ciprofloxacin","Metronidazole","ORS","Domperidone",
-"Ondansetron","Metformin","Glimepiride","Insulin","Amlodipine","Telmisartan",
-"Losartan","Atorvastatin","Rosuvastatin","Calcium","Vitamin D3","Iron",
-"Folic Acid","B-Complex","Cough Syrup","Salbutamol","Budesonide",
-"Montelukast","Cetirizine","Levocetirizine"
+"Paracetamol","Combiflam","Pantoprazole","Etoricoxib","Amoxiclav",
+"Azithromycin","Cefixime","Doxycycline","Ciprofloxacin","Metronidazole",
+"ORS","Domperidone","Ondansetron","Metformin","Amlodipine",
+"Telmisartan","Atorvastatin","Calcium","Vitamin D3","Iron"
 ];
 
 let rxList=[];
 
-/* ========== LOAD MEDS ========== */
+/* ========= LOAD MEDICINES ========= */
 function loadMeds(){
   const m=document.getElementById('medicine');
   m.innerHTML='';
@@ -132,18 +127,17 @@ function loadMeds(){
   });
 }
 
-/* ========== ADD MEDICINE ========== */
+/* ========= ADD MEDICINE ========= */
 function addMedicine(){
   const m=medicine.value;
-  const d=(dose.value||'').trim();
-  if(!m||!d){ alert('Select medicine and enter dose'); return; }
-
+  const d=dose.value.trim();
+  if(!d){ alert('Enter dose/instructions'); return; }
   rxList.push(`${m} – ${d}`);
   renderRx();
   dose.value='';
 }
 
-/* ========== RENDER RX LIST ========== */
+/* ========= RENDER RX ========= */
 function renderRx(){
   const ul=document.getElementById('medList');
   ul.innerHTML='';
@@ -155,27 +149,38 @@ function renderRx(){
   });
 }
 
-/* ========== REMOVE MED ========== */
+/* ========= REMOVE MED ========= */
 function removeRx(i){
   rxList.splice(i,1);
   renderRx();
 }
 
-/* ========== SAVE RECORD ========== */
+/* ========= SAVE VISIT ========= */
 function saveRecord(){
-  const nameVal=(name.value||'').trim();
-  if(nameVal.length<2){ alert('Enter patient name'); return; }
-  if(rxList.length===0){ alert('Add at least one medicine'); return; }
+  const nameEl=document.getElementById('patientName');
+  const nameVal=nameEl.value.trim();
+
+  if(nameVal.length<2){
+    alert('Enter patient name');
+    nameEl.focus();
+    return;
+  }
+
+  if(rxList.length===0){
+    alert('Add at least one medicine');
+    return;
+  }
 
   const data=JSON.parse(localStorage.getItem('emr')||'[]');
+
   const rec={
     opd:data.length+1,
     date:new Date().toLocaleString(),
     name:nameVal,
-    mobile:(mobile.value||'').trim(),
+    mobile:mobile.value.trim(),
     age:age.value||'',
     gender:gender.value,
-    dx:(diagnosis.value||'').trim(),
+    dx:diagnosis.value.trim(),
     rx:rxList.join(' | ')
   };
 
@@ -185,13 +190,12 @@ function saveRecord(){
   loadRecords();
 }
 
-/* ========== LOAD RECORDS ========== */
+/* ========= LOAD RECORDS ========= */
 function loadRecords(){
-  const q=(search.value||'').toLowerCase();
+  const q=search.value.toLowerCase();
   const data=JSON.parse(localStorage.getItem('emr')||'[]');
   const t=document.getElementById('records');
   t.innerHTML='';
-
   data.filter(r=>r.name.toLowerCase().includes(q)||r.mobile.includes(q))
       .forEach((r,i)=>{
         const row=t.insertRow();
@@ -207,25 +211,23 @@ function loadRecords(){
       });
 }
 
-/* ========== PRINT ========== */
+/* ========= PRINT ========= */
 function printRec(i){
   const r=JSON.parse(localStorage.getItem('emr'))[i];
   const w=window.open('','');
   w.document.write(`
-  <h2>Prescription</h2><hr>
-  <p><b>OPD:</b> ${r.opd}</p>
-  <p><b>Name:</b> ${r.name}</p>
-  <p><b>Age:</b> ${r.age}</p>
-  <p><b>Mobile:</b> ${r.mobile}</p>
-  <p><b>Date:</b> ${r.date}</p>
-  <p><b>Diagnosis:</b> ${r.dx}</p>
-  <p><b>Treatment:</b><br>${r.rx.replaceAll('|','<br>')}</p>
-  <br><p>Doctor Signature</p>
+    <h2>Prescription</h2><hr>
+    <p><b>Name:</b> ${r.name}</p>
+    <p><b>Age:</b> ${r.age}</p>
+    <p><b>Date:</b> ${r.date}</p>
+    <p><b>Diagnosis:</b> ${r.dx}</p>
+    <p><b>Treatment:</b><br>${r.rx.replaceAll('|','<br>')}</p>
+    <br><p>Doctor Signature</p>
   `);
   w.print();
 }
 
-/* ========== EXPORT CSV ========== */
+/* ========= EXPORT CSV ========= */
 function exportCSV(){
   const data=JSON.parse(localStorage.getItem('emr')||'[]');
   let csv='OPD,Date,Name,Mobile,Age,Gender,Diagnosis,Treatment\n';
@@ -239,11 +241,15 @@ function exportCSV(){
   a.click();
 }
 
-/* ========== CLEAR FORM ========== */
+/* ========= CLEAR ========= */
 function clearForm(){
-  name.value=''; mobile.value=''; age.value='';
-  diagnosis.value=''; dose.value='';
-  rxList=[]; document.getElementById('medList').innerHTML='';
+  patientName.value='';
+  mobile.value='';
+  age.value='';
+  diagnosis.value='';
+  dose.value='';
+  rxList=[];
+  document.getElementById('medList').innerHTML='';
 }
 
 /* INIT */
@@ -251,4 +257,4 @@ loadMeds();
 loadRecords();
 </script>
 </body>
-  </html>
+</html>
