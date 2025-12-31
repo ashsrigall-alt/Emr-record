@@ -18,13 +18,9 @@ background:#083d77;color:#fff;margin-top:10px}
 button.secondary{background:#555}
 .flex{display:flex;gap:10px;flex-wrap:wrap}
 .flex>div{flex:1;min-width:140px}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ccc;padding:8px;font-size:14px}
-th{background:#e6ecf0}
+.tags label{font-weight:normal;margin-right:12px}
 ul{padding-left:18px}
 li{margin-bottom:6px}
-.tags label{font-weight:normal;margin-right:12px}
-.no-print{margin-bottom:10px}
 @media print{.no-print{display:none}}
 </style>
 </head>
@@ -37,6 +33,7 @@ li{margin-bottom:6px}
 
 <div class="container">
 
+<!-- ================= ADD VISIT ================= -->
 <div class="card">
 <h3>Add Patient Visit</h3>
 
@@ -52,10 +49,7 @@ li{margin-bottom:6px}
 </div>
 
 <div class="flex">
-<div>
-<label>Age</label>
-<input id="age" type="number">
-</div>
+<div><label>Age</label><input id="age" type="number"></div>
 <div>
 <label>Gender</label>
 <select id="gender">
@@ -80,18 +74,40 @@ li{margin-bottom:6px}
 <label>Follow-up Date</label>
 <input id="followup" type="date">
 
-<button type="button" onclick="saveRecord()">Save Visit</button>
+<hr>
+
+<label>Add Medicine</label>
+<div class="flex">
+<select id="medicine"></select>
+<input id="customDrug" placeholder="Or type new drug">
 </div>
 
+<div class="flex">
+<input id="dose" placeholder="Dose / Instructions">
+<select id="preset">
+<option value="">Preset</option>
+<option>OD</option><option>BD</option>
+<option>TDS</option><option>HS</option>
+<option>SOS</option>
+</select>
+<button class="secondary" onclick="applyPreset()">Apply</button>
+</div>
+
+<button class="secondary" onclick="addMedicine()">Add Medicine</button>
+<ul id="medList"></ul>
+
+<button onclick="saveRecord()">Save Visit</button>
+</div>
+
+<!-- ================= RECORDS ================= -->
 <div class="card">
 <h3>Patient Records</h3>
 <input id="search" placeholder="Search by name or mobile" onkeyup="loadRecords()">
 
-<table>
+<table border="1" width="100%">
 <thead>
 <tr>
-<th>UHID</th><th>OPD</th><th>Date</th><th>Name</th>
-<th class="no-print">Print</th>
+<th>UHID</th><th>OPD</th><th>Date</th><th>Name</th><th>Print</th>
 </tr>
 </thead>
 <tbody id="records"></tbody>
@@ -101,7 +117,51 @@ li{margin-bottom:6px}
 </div>
 
 <script>
-/* ================= DATA ================= */
+/* ================= MED MASTER ================= */
+let meds=JSON.parse(localStorage.getItem('meds'))||[
+"Paracetamol","Pantoprazole","Amoxiclav","Azithromycin",
+"Metformin","Amlodipine","Telmisartan","Atorvastatin"
+];
+let rxList=[];
+
+function loadMeds(){
+medicine.innerHTML='';
+meds.forEach(m=>{
+let o=document.createElement('option');
+o.value=o.textContent=m;
+medicine.appendChild(o);
+});
+}
+
+function applyPreset(){
+if(preset.value && !dose.value.includes(preset.value))
+dose.value+=' '+preset.value;
+}
+
+function addMedicine(){
+let drug=customDrug.value.trim()||medicine.value;
+let d=dose.value.trim();
+if(!drug||!d){alert('Enter drug and dose');return;}
+if(!meds.includes(drug)){
+meds.push(drug);
+localStorage.setItem('meds',JSON.stringify(meds));
+loadMeds();
+}
+rxList.push(`${drug} – ${d}`);
+customDrug.value=''; dose.value='';
+renderRx();
+}
+
+function renderRx(){
+medList.innerHTML='';
+rxList.forEach((x,i)=>{
+let li=document.createElement('li');
+li.innerHTML=`${x} <button onclick="rxList.splice(${i},1);renderRx()">Remove</button>`;
+medList.appendChild(li);
+});
+}
+
+/* ================= UHID / OPD ================= */
 function getUHID(m){
 let map=JSON.parse(localStorage.getItem('uhidMap')||'{}');
 if(!map[m]){
@@ -120,22 +180,46 @@ localStorage.setItem('opd',JSON.stringify(o));
 return o.count;
 }
 
-function loadLastVisit(){}
+function getChronic(){
+return [...document.querySelectorAll('.tags input:checked')].map(x=>x.value);
+}
+function setChronic(a){
+document.querySelectorAll('.tags input').forEach(c=>c.checked=a.includes(c.value));
+}
 
+/* ================= FOLLOW-UP ================= */
+function loadLastVisit(){
+let m=mobile.value.trim();
+let data=JSON.parse(localStorage.getItem('emr')||'[]');
+let last=[...data].reverse().find(r=>r.mobile===m);
+if(!last)return;
+diagnosis.value=last.dx;
+rxList=last.rx.split('|').map(x=>x.trim());
+renderRx();
+setChronic(last.chronic||[]);
+}
+
+/* ================= SAVE ================= */
 function saveRecord(){
 let n=patientName.value.trim(), m=mobile.value.trim();
 if(n.length<2||m.length<5){alert('Name & mobile required');return;}
+if(rxList.length===0){alert('Add medicine');return;}
+
 let data=JSON.parse(localStorage.getItem('emr')||'[]');
 data.push({
 uhid:getUHID(m),
 opd:getOPD(),
 date:new Date().toLocaleString(),
-name:n, mobile:m, age:age.value, gender:gender.value
+name:n,mobile:m,age:age.value,gender:gender.value,
+dx:diagnosis.value,chronic:getChronic(),
+rx:rxList.join(' | '),fu:followup.value
 });
 localStorage.setItem('emr',JSON.stringify(data));
+rxList=[];medList.innerHTML='';
 loadRecords();
 }
 
+/* ================= LOAD ================= */
 function loadRecords(){
 let q=search.value.toLowerCase();
 let data=JSON.parse(localStorage.getItem('emr')||'[]');
@@ -151,85 +235,63 @@ row.insertCell(4).innerHTML=`<button onclick="printRec(${i})">Print</button>`;
 });
 }
 
-/* ================= PRINT – A4 OPD CARD ================= */
+/* ================= PRINT (A4 OPD CARD) ================= */
 function printRec(i){
 const r=JSON.parse(localStorage.getItem('emr'))[i];
 const qr=encodeURIComponent(`UHID:${r.uhid}|Mob:${r.mobile}|Date:${r.date}`);
 const w=window.open('','');
 
 w.document.write(`
-<html>
-<head>
+<html><head>
 <style>
-@page { size:A4; margin:15mm; }
+@page{size:A4;margin:15mm}
 body{font-family:Arial;font-size:12px;margin:0}
 .page{width:180mm;min-height:257mm;margin:auto;
 display:flex;flex-direction:column}
 table{width:100%;border-collapse:collapse}
-td{border:1px solid #000;padding:4px;vertical-align:top}
+td{border:1px solid #000;padding:4px}
 .noborder td{border:none}
 .box{height:45mm}
 .bigbox{height:110mm}
 .center{text-align:center}
-.footer{margin-top:auto;text-align:center;font-size:11px}
+.footer{margin-top:auto;text-align:center}
 .signature{text-align:right;margin-top:25mm}
 </style>
-</head>
-
-<body>
+</head><body>
 <div class="page">
 
 <table class="noborder">
 <tr>
-<td style="width:15%">
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${qr}">
-</td>
-<td style="width:70%" class="center">
+<td width="15%"><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${qr}"></td>
+<td width="70%" class="center">
 <b>SHREE RAM CLINIC</b><br>
 ADDRESS – BIRRA, CHAMPA.<br>
 Department of General Medicine
 </td>
-<td style="width:15%" class="center">
+<td width="15%" class="center">
 <img src="https://barcode.tec-it.com/barcode.ashx?data=${r.uhid}&code=Code128">
 </td>
 </tr>
 </table>
 
 <table>
-<tr>
-<td>Name: ${r.name}</td>
-<td>Age: ${r.age||'-'}</td>
-<td>Gender: ${r.gender||'-'}</td>
-</tr>
-<tr>
-<td>Mobile: ${r.mobile}</td>
-<td>UHID: ${r.uhid}</td>
-<td>OPD No: ${r.opd}</td>
-</tr>
-<tr>
-<td>Date: ${r.date}</td>
-<td>Department: General Medicine</td>
-<td>Doctor: Dr. Ashwini Srivastav</td>
-</tr>
+<tr><td>Name:${r.name}</td><td>Age:${r.age||'-'}</td><td>Gender:${r.gender}</td></tr>
+<tr><td>Mobile:${r.mobile}</td><td>UHID:${r.uhid}</td><td>OPD:${r.opd}</td></tr>
+<tr><td>Date:${r.date}</td><td>Department:GM</td><td>Doctor:Dr. Ashwini Srivastav</td></tr>
 </table>
+
+<table><tr class="center">
+<td class="box">Visit 1</td><td class="box">Visit 2</td>
+<td class="box">Visit 3</td><td class="box">Visit 4</td>
+</tr></table>
 
 <table>
 <tr class="center">
-<td class="box">Visit 1</td>
-<td class="box">Visit 2</td>
-<td class="box">Visit 3</td>
-<td class="box">Visit 4</td>
-</tr>
-</table>
-
-<table>
-<tr class="center">
-<td style="width:40%"><b>Clinical Notes</b></td>
-<td style="width:60%"><b>Advice / Treatment</b></td>
+<td width="40%"><b>Clinical Notes</b></td>
+<td width="60%"><b>Advice / Treatment</b></td>
 </tr>
 <tr>
-<td class="bigbox"></td>
-<td class="bigbox"></td>
+<td class="bigbox"></td><td class="bigbox"></td>
 </tr>
 </table>
 
@@ -239,13 +301,12 @@ Please retain this card for future visits. UHID: ${r.uhid}
 </div>
 
 </div>
-</body>
-</html>
+</body></html>
 `);
 w.print();
 }
 
-loadRecords();
+loadMeds();loadRecords();
 </script>
 </body>
-  </html>
+</html>
