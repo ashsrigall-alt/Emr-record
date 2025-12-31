@@ -1,8 +1,10 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Clinic EMR – Stable Mobile Version</title>
+<title>Clinic EMR – Multi-Medicine OPD</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{font-family:Arial,Helvetica,sans-serif;background:#eef1f5;margin:0}
 header{background:#083d77;color:#fff;padding:15px;text-align:center}
@@ -10,75 +12,116 @@ header{background:#083d77;color:#fff;padding:15px;text-align:center}
 .card{background:#fff;padding:15px;margin-bottom:15px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
 label{font-weight:bold;margin-top:8px;display:block}
 input,select,textarea{width:100%;padding:10px;margin-top:4px;font-size:16px}
-button{background:#083d77;color:#fff;border:none;padding:12px 20px;border-radius:6px;margin-top:15px;font-size:16px;cursor:pointer}
+button{background:#083d77;color:#fff;border:none;padding:12px 20px;border-radius:6px;margin-top:10px;font-size:16px;cursor:pointer}
 button.secondary{background:#555}
 .flex{display:flex;gap:10px;flex-wrap:wrap}
 .flex>div{flex:1;min-width:140px}
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ccc;padding:8px;font-size:14px}
 th{background:#e6ecf0}
+ul{padding-left:18px}
+li{margin-bottom:6px}
 @media print{.no-print{display:none}}
 </style>
 </head>
+
 <body>
 <header>
 <h2>Clinic / Hospital EMR</h2>
 <p>Offline • Secure • OPD Optimized</p>
-</header><div class="container"><div class="card">
-<h3>Add Patient Visit</h3><div class="flex">
-<div>
-<label>Patient Name *</label>
-<input id="name" autocomplete="off">
-</div>
-<div>
-<label>Mobile</label>
-<input id="mobile" inputmode="numeric">
-</div>
-</div><div class="flex">
-<div>
-<label>Age</label>
-<input id="age" type="number">
-</div>
-<div>
-<label>Gender</label>
-<select id="gender">
-<option value="Male">Male</option>
-<option value="Female">Female</option>
-<option value="Other">Other</option>
-</select>
-</div>
-</div><label>Diagnosis</label> <input id="diagnosis">
+</header>
 
-<label>Medicine</label> <select id="medicine"></select>
+<div class="container">
 
-<label>Dosage / Instructions</label> <input id="dose" placeholder="e.g. 500 mg BD x 5 days">
+<!-- ================= ADD VISIT ================= -->
+<div class="card">
+<h3>Add Patient Visit</h3>
+
+<div class="flex">
+  <div>
+    <label>Patient Name *</label>
+    <input id="name" autocomplete="off">
+  </div>
+  <div>
+    <label>Mobile</label>
+    <input id="mobile" inputmode="numeric">
+  </div>
+</div>
+
+<div class="flex">
+  <div>
+    <label>Age</label>
+    <input id="age" type="number">
+  </div>
+  <div>
+    <label>Gender</label>
+    <select id="gender">
+      <option>Male</option>
+      <option>Female</option>
+      <option>Other</option>
+    </select>
+  </div>
+</div>
+
+<label>Diagnosis</label>
+<input id="diagnosis">
+
+<hr>
+
+<label>Add Medicine</label>
+<div class="flex">
+  <select id="medicine"></select>
+  <input id="dose" placeholder="Dose / Instructions">
+  <button type="button" class="secondary" onclick="addMedicine()">Add</button>
+</div>
+
+<ul id="medList"></ul>
 
 <button onclick="saveRecord()">Save Visit</button>
-
-</div><div class="card">
-<h3>Patient Records</h3>
-<div class="flex">
-<input id="search" placeholder="Search by name or mobile" onkeyup="loadRecords()">
-<button class="secondary" onclick="exportCSV()">Export CSV</button>
 </div>
+
+<!-- ================= RECORDS ================= -->
+<div class="card">
+<h3>Patient Records</h3>
+
+<div class="flex no-print">
+  <input id="search" placeholder="Search by name or mobile" onkeyup="loadRecords()">
+  <button class="secondary" onclick="exportCSV()">Export CSV</button>
+</div>
+
 <table>
 <thead>
 <tr>
-<th>OPD</th><th>Date</th><th>Name</th><th>Mobile</th><th>Age</th><th>Dx</th><th>Rx</th><th>Print</th>
+<th>OPD</th>
+<th>Date</th>
+<th>Name</th>
+<th>Mobile</th>
+<th>Age</th>
+<th>Dx</th>
+<th>Rx</th>
+<th class="no-print">Print</th>
 </tr>
 </thead>
 <tbody id="records"></tbody>
 </table>
-</div></div><script>
-// -------- MEDICINE MASTER --------
+</div>
+
+</div>
+
+<script>
+/* ========== MEDICINE MASTER ========== */
 const meds=[
-"Paracetamol","Combiflam","Pantoprazole","Etoricoxib","Amoxiclav","Azithromycin","Cefixime",
-"Doxycycline","Ciprofloxacin","Metronidazole","ORS","Domperidone","Ondansetron",
-"Metformin","Glimepiride","Insulin","Amlodipine","Telmisartan","Losartan",
-"Atorvastatin","Rosuvastatin","Calcium","Vitamin D3","Iron","Folic Acid","B-Complex",
-"Cough Syrup","Salbutamol","Budesonide","Montelukast","Cetirizine","Levocetirizine"
+"Paracetamol","Combiflam","Pantoprazole","Etoricoxib","Amoxiclav","Azithromycin",
+"Cefixime","Doxycycline","Ciprofloxacin","Metronidazole","ORS","Domperidone",
+"Ondansetron","Metformin","Glimepiride","Insulin","Amlodipine","Telmisartan",
+"Losartan","Atorvastatin","Rosuvastatin","Calcium","Vitamin D3","Iron",
+"Folic Acid","B-Complex","Cough Syrup","Salbutamol","Budesonide",
+"Montelukast","Cetirizine","Levocetirizine"
 ];
 
+let rxList=[];
+
+/* ========== LOAD MEDS ========== */
 function loadMeds(){
   const m=document.getElementById('medicine');
   m.innerHTML='';
@@ -89,16 +132,40 @@ function loadMeds(){
   });
 }
 
-// -------- SAVE RECORD (MOBILE SAFE) --------
-function saveRecord(){
-  const nameEl=document.getElementById('name');
-  const nameVal=(nameEl.value||'').trim();
+/* ========== ADD MEDICINE ========== */
+function addMedicine(){
+  const m=medicine.value;
+  const d=(dose.value||'').trim();
+  if(!m||!d){ alert('Select medicine and enter dose'); return; }
 
-  if(nameVal.length<2){
-    alert('Enter patient name');
-    nameEl.focus();
-    return;
-  }
+  rxList.push(`${m} – ${d}`);
+  renderRx();
+  dose.value='';
+}
+
+/* ========== RENDER RX LIST ========== */
+function renderRx(){
+  const ul=document.getElementById('medList');
+  ul.innerHTML='';
+  rxList.forEach((x,i)=>{
+    const li=document.createElement('li');
+    li.innerHTML=`${x} 
+      <button class="secondary" onclick="removeRx(${i})">Remove</button>`;
+    ul.appendChild(li);
+  });
+}
+
+/* ========== REMOVE MED ========== */
+function removeRx(i){
+  rxList.splice(i,1);
+  renderRx();
+}
+
+/* ========== SAVE RECORD ========== */
+function saveRecord(){
+  const nameVal=(name.value||'').trim();
+  if(nameVal.length<2){ alert('Enter patient name'); return; }
+  if(rxList.length===0){ alert('Add at least one medicine'); return; }
 
   const data=JSON.parse(localStorage.getItem('emr')||'[]');
   const rec={
@@ -109,7 +176,7 @@ function saveRecord(){
     age:age.value||'',
     gender:gender.value,
     dx:(diagnosis.value||'').trim(),
-    rx:medicine.value+' – '+(dose.value||'').trim()
+    rx:rxList.join(' | ')
   };
 
   data.push(rec);
@@ -118,7 +185,7 @@ function saveRecord(){
   loadRecords();
 }
 
-// -------- LOAD RECORDS --------
+/* ========== LOAD RECORDS ========== */
 function loadRecords(){
   const q=(search.value||'').toLowerCase();
   const data=JSON.parse(localStorage.getItem('emr')||'[]');
@@ -135,32 +202,35 @@ function loadRecords(){
         row.insertCell(4).innerText=r.age;
         row.insertCell(5).innerText=r.dx;
         row.insertCell(6).innerText=r.rx;
-        row.insertCell(7).innerHTML=`<button class='secondary' onclick='printRec(${i})'>Print</button>`;
+        row.insertCell(7).innerHTML=
+          `<button class="secondary" onclick="printRec(${i})">Print</button>`;
       });
 }
 
-// -------- PRINT --------
+/* ========== PRINT ========== */
 function printRec(i){
   const r=JSON.parse(localStorage.getItem('emr'))[i];
   const w=window.open('','');
-  w.document.write(`<h2>Prescription</h2><hr>
+  w.document.write(`
+  <h2>Prescription</h2><hr>
   <p><b>OPD:</b> ${r.opd}</p>
   <p><b>Name:</b> ${r.name}</p>
   <p><b>Age:</b> ${r.age}</p>
   <p><b>Mobile:</b> ${r.mobile}</p>
   <p><b>Date:</b> ${r.date}</p>
   <p><b>Diagnosis:</b> ${r.dx}</p>
-  <p><b>Treatment:</b> ${r.rx}</p>
-  <br><p>Doctor Signature</p>`);
+  <p><b>Treatment:</b><br>${r.rx.replaceAll('|','<br>')}</p>
+  <br><p>Doctor Signature</p>
+  `);
   w.print();
 }
 
-// -------- EXPORT CSV --------
+/* ========== EXPORT CSV ========== */
 function exportCSV(){
   const data=JSON.parse(localStorage.getItem('emr')||'[]');
   let csv='OPD,Date,Name,Mobile,Age,Gender,Diagnosis,Treatment\n';
   data.forEach(r=>{
-    csv+=`${r.opd},${r.date},${r.name},${r.mobile},${r.age},${r.gender},${r.dx},${r.rx}\n`;
+    csv+=`${r.opd},${r.date},${r.name},${r.mobile},${r.age},${r.gender},${r.dx},"${r.rx}"\n`;
   });
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');
@@ -169,11 +239,16 @@ function exportCSV(){
   a.click();
 }
 
+/* ========== CLEAR FORM ========== */
 function clearForm(){
-  name.value=''; mobile.value=''; age.value=''; diagnosis.value=''; dose.value='';
+  name.value=''; mobile.value=''; age.value='';
+  diagnosis.value=''; dose.value='';
+  rxList=[]; document.getElementById('medList').innerHTML='';
 }
 
+/* INIT */
 loadMeds();
 loadRecords();
-</script></body>
- </html>
+</script>
+</body>
+  </html>
