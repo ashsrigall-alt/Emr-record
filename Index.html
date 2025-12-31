@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Clinic EMR – Final OPD System</title>
+<title>SHREE RAM CLINIC – EMR</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -31,12 +31,13 @@ li{margin-bottom:6px}
 
 <body>
 <header>
-<h2>Clinic / Hospital EMR</h2>
-<p>UHID • Chronic Care • Smart Prescription</p>
+<h2>SHREE RAM CLINIC</h2>
+<p>ADDRESS – BIRRA, CHAMPA.</p>
 </header>
 
 <div class="container">
 
+<!-- ================= ADD VISIT ================= -->
 <div class="card">
 <h3>Add Patient Visit</h3>
 
@@ -94,18 +95,19 @@ li{margin-bottom:6px}
 <select id="preset">
 <option value="">Preset</option>
 <option>OD</option><option>BD</option>
-<option>TDS</option><option>HS</option><option>SOS</option>
+<option>TDS</option><option>HS</option>
+<option>SOS</option>
 </select>
 <button type="button" class="secondary" onclick="applyPreset()">Apply</button>
 </div>
 
 <button type="button" class="secondary" onclick="addMedicine()">Add Medicine</button>
-
 <ul id="medList"></ul>
 
 <button type="button" onclick="saveRecord()">Save Visit</button>
 </div>
 
+<!-- ================= RECORDS ================= -->
 <div class="card">
 <h3>Patient Records</h3>
 
@@ -131,11 +133,11 @@ li{margin-bottom:6px}
 </div>
 
 <script>
-/* ---------------- GLOBAL ---------------- */
+/* ================= GLOBAL ================= */
 let PRINT_LANG='en';
 function setLang(l){PRINT_LANG=l;alert('Print language set');}
 
-/* ---------------- MED MASTER ---------------- */
+/* ================= MED MASTER ================= */
 let meds=JSON.parse(localStorage.getItem('meds'))||[
 "Paracetamol","Pantoprazole","Amoxiclav","Azithromycin",
 "Metformin","Amlodipine","Telmisartan","Atorvastatin",
@@ -143,7 +145,6 @@ let meds=JSON.parse(localStorage.getItem('meds'))||[
 ];
 let rxList=[];
 
-/* ---------------- LOAD MEDS ---------------- */
 function loadMeds(){
 medicine.innerHTML='';
 meds.forEach(m=>{
@@ -153,13 +154,11 @@ medicine.appendChild(o);
 });
 }
 
-/* ---------------- PRESET ---------------- */
 function applyPreset(){
 if(preset.value && !dose.value.includes(preset.value))
 dose.value+=' '+preset.value;
 }
 
-/* ---------------- ADD MED ---------------- */
 function addMedicine(){
 let drug=customDrug.value.trim()||medicine.value;
 let d=dose.value.trim();
@@ -174,7 +173,6 @@ customDrug.value=''; dose.value='';
 renderRx();
 }
 
-/* ---------------- RX LIST ---------------- */
 function renderRx(){
 medList.innerHTML='';
 rxList.forEach((x,i)=>{
@@ -184,7 +182,7 @@ medList.appendChild(li);
 });
 }
 
-/* ---------------- UHID ---------------- */
+/* ================= UHID / OPD ================= */
 function getUHID(m){
 let map=JSON.parse(localStorage.getItem('uhidMap')||'{}');
 if(!map[m]){
@@ -194,7 +192,6 @@ localStorage.setItem('uhidMap',JSON.stringify(map));
 return map[m];
 }
 
-/* ---------------- OPD ---------------- */
 function getOPD(){
 let d=new Date().toDateString();
 let o=JSON.parse(localStorage.getItem('opd')||'{}');
@@ -204,7 +201,7 @@ localStorage.setItem('opd',JSON.stringify(o));
 return o.count;
 }
 
-/* ---------------- CHRONIC ---------------- */
+/* ================= CHRONIC ================= */
 function getChronic(){
 return [...document.querySelectorAll('.tags input:checked')].map(x=>x.value);
 }
@@ -212,7 +209,7 @@ function setChronic(a){
 document.querySelectorAll('.tags input').forEach(c=>c.checked=a.includes(c.value));
 }
 
-/* ---------------- LOAD LAST VISIT ---------------- */
+/* ================= FOLLOW-UP LOAD ================= */
 function loadLastVisit(){
 let m=mobile.value.trim();
 if(m.length<5)return;
@@ -225,7 +222,7 @@ renderRx();
 setChronic(last.chronic||[]);
 }
 
-/* ---------------- SAVE ---------------- */
+/* ================= SAVE ================= */
 function saveRecord(){
 let n=patientName.value.trim(), m=mobile.value.trim();
 if(n.length<2||m.length<5){alert('Name & mobile required');return;}
@@ -246,7 +243,7 @@ rxList=[]; medList.innerHTML='';
 loadRecords();
 }
 
-/* ---------------- LOAD RECORDS ---------------- */
+/* ================= LOAD RECORDS ================= */
 function loadRecords(){
 let q=search.value.toLowerCase();
 let data=JSON.parse(localStorage.getItem('emr')||'[]');
@@ -266,55 +263,83 @@ row.insertCell(8).innerHTML=`<button onclick="printRec(${i})">Print</button>`;
 });
 }
 
-/* ---------------- HINDI TRANSLATION ---------------- */
-function translateDoseToHindi(t){
-const m={
-"OD":"दिन में एक बार","BD":"दिन में दो बार","TDS":"दिन में तीन बार",
-"HS":"रात में","SOS":"ज़रूरत पड़ने पर",
-"before food":"भोजन से पहले","after food":"भोजन के बाद",
-"with food":"भोजन के साथ","days":"दिन"
-};
-Object.keys(m).forEach(k=>{
-t=t.replace(new RegExp("\\b"+k+"\\b","gi"),m[k]);
-});
-return t;
-}
-
-/* ---------------- PRINT ---------------- */
+/* ================= PRINT (OPD CARD STYLE, BLANK NOTES) ================= */
 function printRec(i){
 const r=JSON.parse(localStorage.getItem('emr'))[i];
-const T={
-en:{rx:"Rx",dx:"Diagnosis",ch:"Chronic",fu:"Follow-up",sg:"Doctor Signature"},
-hi:{rx:"दवा",dx:"निदान",ch:"दीर्घ रोग",fu:"पुनः जांच",sg:"डॉक्टर हस्ताक्षर"}
-}[PRINT_LANG];
-
-const rxRows=r.rx.split('|').map((x,j)=>`
-<tr><td>${j+1}</td><td>${
-PRINT_LANG==='hi'?translateDoseToHindi(x.trim()):x.trim()
-}</td></tr>`).join('');
-
 const qr=encodeURIComponent(`UHID:${r.uhid}|Mob:${r.mobile}|Date:${r.date}`);
-
 const w=window.open('','');
+
 w.document.write(`
-<html><head><style>
-body{font-family:Arial;font-size:14px;margin:20px}
-.wm{position:fixed;top:40%;left:20%;font-size:80px;opacity:.05;transform:rotate(-30deg)}
+<html><head>
+<style>
+body{font-family:Arial;font-size:12px;margin:10px}
 table{width:100%;border-collapse:collapse}
-td{padding:6px}
-</style></head>
-<body>
-<div class="wm">PRESCRIPTION</div>
-<h3 style="text-align:center">YOUR CLINIC NAME</h3>
-<p>UHID:${r.uhid} | OPD:${r.opd} | ${r.date}</p>
-<p>${r.name}, ${r.age} | ${r.gender}</p>
-<p><b>${T.ch}:</b> ${(r.chronic||[]).join(', ')}</p>
-<p><b>${T.dx}:</b> ${r.dx}</p>
-<table>${rxRows}</table>
-<p><b>${T.fu}:</b> ${r.fu||'As advised'}</p>
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qr}">
-<p style="text-align:right">${T.sg}</p>
-</body></html>`);
+td{border:1px solid #000;padding:4px;vertical-align:top}
+.noborder td{border:none}
+.box{height:60px}
+.bigbox{height:260px}
+.center{text-align:center}
+</style>
+</head><body>
+
+<table class="noborder">
+<tr>
+<td style="width:15%"><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${qr}"></td>
+<td style="width:70%" class="center">
+<b>SHREE RAM CLINIC</b><br>
+ADDRESS – BIRRA, CHAMPA.<br>
+Department of General Medicine
+</td>
+<td style="width:15%" class="center">
+<img src="https://barcode.tec-it.com/barcode.ashx?data=${r.uhid}&code=Code128">
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td>Name: ${r.name}</td>
+<td>Age: ${r.age||'-'}</td>
+<td>Gender: ${r.gender||'-'}</td>
+</tr>
+<tr>
+<td>Mobile: ${r.mobile}</td>
+<td>UHID: ${r.uhid}</td>
+<td>OPD No: ${r.opd}</td>
+</tr>
+<tr>
+<td>Date: ${r.date}</td>
+<td>Department: General Medicine</td>
+<td>Doctor: Dr. Ashwini Srivastav</td>
+</tr>
+</table>
+
+<table>
+<tr class="center">
+<td class="box">Visit 1</td>
+<td class="box">Visit 2</td>
+<td class="box">Visit 3</td>
+<td class="box">Visit 4</td>
+</tr>
+</table>
+
+<table>
+<tr class="center">
+<td style="width:40%"><b>Clinical Notes</b></td>
+<td style="width:60%"><b>Advice / Treatment</b></td>
+</tr>
+<tr>
+<td class="bigbox"></td>
+<td class="bigbox"></td>
+</tr>
+</table>
+
+<p class="center">Please retain this card for future visits. UHID: ${r.uhid}</p>
+
+<p style="text-align:right;margin-top:40px">Doctor Signature & Stamp</p>
+
+</body></html>
+`);
 w.print();
 }
 
@@ -322,4 +347,4 @@ w.print();
 loadMeds();loadRecords();
 </script>
 </body>
-</html>
+  </html>
