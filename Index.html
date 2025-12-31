@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Clinic EMR – OPD</title>
+<title>Clinic EMR – Final OPD System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{font-family:Arial,Helvetica,sans-serif;background:#eef1f5;margin:0}
+body{font-family:Arial;background:#eef1f5;margin:0}
 header{background:#083d77;color:#fff;padding:15px;text-align:center}
 .container{padding:15px;max-width:1200px;margin:auto}
 .card{background:#fff;padding:15px;margin-bottom:15px;border-radius:8px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1)}
-label{font-weight:bold;margin-top:8px;display:block}
-input,select{width:100%;padding:10px;margin-top:4px;font-size:16px}
-button{background:#083d77;color:#fff;border:none;padding:12px 20px;
-       border-radius:6px;margin-top:12px;font-size:16px;cursor:pointer}
+box-shadow:0 2px 6px rgba(0,0,0,.1)}
+label{font-weight:bold;display:block;margin-top:8px}
+input,select{width:100%;padding:10px;font-size:16px;margin-top:4px}
+button{padding:10px 16px;border:none;border-radius:6px;
+background:#083d77;color:#fff;margin-top:10px}
 button.secondary{background:#555}
 .flex{display:flex;gap:10px;flex-wrap:wrap}
 .flex>div{flex:1;min-width:140px}
@@ -23,6 +23,8 @@ th,td{border:1px solid #ccc;padding:8px;font-size:14px}
 th{background:#e6ecf0}
 ul{padding-left:18px}
 li{margin-bottom:6px}
+.tags label{font-weight:normal;margin-right:12px}
+.no-print{margin-bottom:10px}
 @media print{.no-print{display:none}}
 </style>
 </head>
@@ -30,72 +32,95 @@ li{margin-bottom:6px}
 <body>
 <header>
 <h2>Clinic / Hospital EMR</h2>
-<p>Offline • OPD Optimized</p>
+<p>UHID • Chronic Care • Smart Prescription</p>
 </header>
 
 <div class="container">
 
-<!-- ================= ADD VISIT ================= -->
 <div class="card">
 <h3>Add Patient Visit</h3>
 
 <div class="flex">
-  <div>
-    <label>Patient Name *</label>
-    <input id="patientName" autocomplete="off">
-  </div>
-  <div>
-    <label>Mobile</label>
-    <input id="mobile" inputmode="numeric">
-  </div>
+<div>
+<label>Patient Name *</label>
+<input id="patientName">
+</div>
+<div>
+<label>Mobile *</label>
+<input id="mobile" onblur="loadLastVisit()">
+</div>
 </div>
 
 <div class="flex">
-  <div>
-    <label>Age</label>
-    <input id="age" type="number">
-  </div>
-  <div>
-    <label>Gender</label>
-    <select id="gender">
-      <option>Male</option>
-      <option>Female</option>
-      <option>Other</option>
-    </select>
-  </div>
+<div>
+<label>Age</label>
+<input id="age" type="number">
+</div>
+<div>
+<label>Gender</label>
+<select id="gender">
+<option>Male</option><option>Female</option><option>Other</option>
+</select>
+</div>
 </div>
 
 <label>Diagnosis</label>
 <input id="diagnosis">
 
+<label>Chronic Diseases</label>
+<div class="tags">
+<label><input type="checkbox" value="DM"> DM</label>
+<label><input type="checkbox" value="HTN"> HTN</label>
+<label><input type="checkbox" value="COPD"> COPD</label>
+<label><input type="checkbox" value="Asthma"> Asthma</label>
+<label><input type="checkbox" value="CKD"> CKD</label>
+<label><input type="checkbox" value="IHD"> IHD</label>
+</div>
+
+<label>Follow-up Date</label>
+<input id="followup" type="date">
+
 <hr>
 
 <label>Add Medicine</label>
+
 <div class="flex">
-  <select id="medicine"></select>
-  <input id="dose" placeholder="Dose / Instructions">
-  <button type="button" class="secondary" onclick="addMedicine()">Add</button>
+<select id="medicine"></select>
+<input id="customDrug" placeholder="Or type new drug">
 </div>
+
+<div class="flex">
+<input id="dose" placeholder="Dose / Instructions">
+<select id="preset">
+<option value="">Preset</option>
+<option>OD</option><option>BD</option>
+<option>TDS</option><option>HS</option><option>SOS</option>
+</select>
+<button type="button" class="secondary" onclick="applyPreset()">Apply</button>
+</div>
+
+<button type="button" class="secondary" onclick="addMedicine()">Add Medicine</button>
 
 <ul id="medList"></ul>
 
 <button type="button" onclick="saveRecord()">Save Visit</button>
 </div>
 
-<!-- ================= RECORDS ================= -->
 <div class="card">
 <h3>Patient Records</h3>
 
-<div class="flex no-print">
-  <input id="search" placeholder="Search by name or mobile" onkeyup="loadRecords()">
-  <button class="secondary" onclick="exportCSV()">Export CSV</button>
+<div class="no-print">
+<button class="secondary" onclick="setLang('en')">English</button>
+<button class="secondary" onclick="setLang('hi')">हिंदी</button>
 </div>
+
+<input id="search" placeholder="Search by name or mobile" onkeyup="loadRecords()">
 
 <table>
 <thead>
 <tr>
-<th>OPD</th><th>Date</th><th>Name</th><th>Mobile</th>
-<th>Age</th><th>Dx</th><th>Rx</th>
+<th>UHID</th><th>OPD</th><th>Date</th><th>Name</th>
+<th>Chronic</th><th>Dx</th><th>Rx</th><th>FU</th>
 <th class="no-print">Print</th>
 </tr>
 </thead>
@@ -106,155 +131,195 @@ li{margin-bottom:6px}
 </div>
 
 <script>
-/* ========= MEDICINE MASTER ========= */
-const meds=[
-"Paracetamol","Combiflam","Pantoprazole","Etoricoxib","Amoxiclav",
-"Azithromycin","Cefixime","Doxycycline","Ciprofloxacin","Metronidazole",
-"ORS","Domperidone","Ondansetron","Metformin","Amlodipine",
-"Telmisartan","Atorvastatin","Calcium","Vitamin D3","Iron"
-];
+/* ---------------- GLOBAL ---------------- */
+let PRINT_LANG='en';
+function setLang(l){PRINT_LANG=l;alert('Print language set');}
 
+/* ---------------- MED MASTER ---------------- */
+let meds=JSON.parse(localStorage.getItem('meds'))||[
+"Paracetamol","Pantoprazole","Amoxiclav","Azithromycin",
+"Metformin","Amlodipine","Telmisartan","Atorvastatin",
+"Calcium","Vitamin D3"
+];
 let rxList=[];
 
-/* ========= LOAD MEDICINES ========= */
+/* ---------------- LOAD MEDS ---------------- */
 function loadMeds(){
-  const m=document.getElementById('medicine');
-  m.innerHTML='';
-  meds.forEach(x=>{
-    const o=document.createElement('option');
-    o.value=x; o.textContent=x;
-    m.appendChild(o);
-  });
+medicine.innerHTML='';
+meds.forEach(m=>{
+let o=document.createElement('option');
+o.value=o.textContent=m;
+medicine.appendChild(o);
+});
 }
 
-/* ========= ADD MEDICINE ========= */
+/* ---------------- PRESET ---------------- */
+function applyPreset(){
+if(preset.value && !dose.value.includes(preset.value))
+dose.value+=' '+preset.value;
+}
+
+/* ---------------- ADD MED ---------------- */
 function addMedicine(){
-  const m=medicine.value;
-  const d=dose.value.trim();
-  if(!d){ alert('Enter dose/instructions'); return; }
-  rxList.push(`${m} – ${d}`);
-  renderRx();
-  dose.value='';
+let drug=customDrug.value.trim()||medicine.value;
+let d=dose.value.trim();
+if(!drug||!d){alert('Enter drug and dose');return;}
+if(!meds.includes(drug)){
+meds.push(drug);
+localStorage.setItem('meds',JSON.stringify(meds));
+loadMeds();
+}
+rxList.push(`${drug} – ${d}`);
+customDrug.value=''; dose.value='';
+renderRx();
 }
 
-/* ========= RENDER RX ========= */
+/* ---------------- RX LIST ---------------- */
 function renderRx(){
-  const ul=document.getElementById('medList');
-  ul.innerHTML='';
-  rxList.forEach((x,i)=>{
-    const li=document.createElement('li');
-    li.innerHTML=`${x} 
-      <button class="secondary" onclick="removeRx(${i})">Remove</button>`;
-    ul.appendChild(li);
-  });
+medList.innerHTML='';
+rxList.forEach((x,i)=>{
+let li=document.createElement('li');
+li.innerHTML=`${x} <button onclick="rxList.splice(${i},1);renderRx()">Remove</button>`;
+medList.appendChild(li);
+});
 }
 
-/* ========= REMOVE MED ========= */
-function removeRx(i){
-  rxList.splice(i,1);
-  renderRx();
+/* ---------------- UHID ---------------- */
+function getUHID(m){
+let map=JSON.parse(localStorage.getItem('uhidMap')||'{}');
+if(!map[m]){
+map[m]='UH'+(100000+Object.keys(map).length);
+localStorage.setItem('uhidMap',JSON.stringify(map));
+}
+return map[m];
 }
 
-/* ========= SAVE VISIT ========= */
+/* ---------------- OPD ---------------- */
+function getOPD(){
+let d=new Date().toDateString();
+let o=JSON.parse(localStorage.getItem('opd')||'{}');
+if(o.date!==d){o={date:d,count:0};}
+o.count++;
+localStorage.setItem('opd',JSON.stringify(o));
+return o.count;
+}
+
+/* ---------------- CHRONIC ---------------- */
+function getChronic(){
+return [...document.querySelectorAll('.tags input:checked')].map(x=>x.value);
+}
+function setChronic(a){
+document.querySelectorAll('.tags input').forEach(c=>c.checked=a.includes(c.value));
+}
+
+/* ---------------- LOAD LAST VISIT ---------------- */
+function loadLastVisit(){
+let m=mobile.value.trim();
+if(m.length<5)return;
+let data=JSON.parse(localStorage.getItem('emr')||'[]');
+let last=[...data].reverse().find(r=>r.mobile===m);
+if(!last)return;
+diagnosis.value=last.dx;
+rxList=last.rx.split('|').map(x=>x.trim());
+renderRx();
+setChronic(last.chronic||[]);
+}
+
+/* ---------------- SAVE ---------------- */
 function saveRecord(){
-  const nameEl=document.getElementById('patientName');
-  const nameVal=nameEl.value.trim();
+let n=patientName.value.trim(), m=mobile.value.trim();
+if(n.length<2||m.length<5){alert('Name & mobile required');return;}
+if(rxList.length===0){alert('Add medicine');return;}
 
-  if(nameVal.length<2){
-    alert('Enter patient name');
-    nameEl.focus();
-    return;
-  }
-
-  if(rxList.length===0){
-    alert('Add at least one medicine');
-    return;
-  }
-
-  const data=JSON.parse(localStorage.getItem('emr')||'[]');
-
-  const rec={
-    opd:data.length+1,
-    date:new Date().toLocaleString(),
-    name:nameVal,
-    mobile:mobile.value.trim(),
-    age:age.value||'',
-    gender:gender.value,
-    dx:diagnosis.value.trim(),
-    rx:rxList.join(' | ')
-  };
-
-  data.push(rec);
-  localStorage.setItem('emr',JSON.stringify(data));
-  clearForm();
-  loadRecords();
+let data=JSON.parse(localStorage.getItem('emr')||'[]');
+let rec={
+uhid:getUHID(m),
+opd:getOPD(),
+date:new Date().toLocaleString(),
+name:n,mobile:m,age:age.value,gender:gender.value,
+dx:diagnosis.value,chronic:getChronic(),
+rx:rxList.join(' | '),fu:followup.value
+};
+data.push(rec);
+localStorage.setItem('emr',JSON.stringify(data));
+rxList=[]; medList.innerHTML='';
+loadRecords();
 }
 
-/* ========= LOAD RECORDS ========= */
+/* ---------------- LOAD RECORDS ---------------- */
 function loadRecords(){
-  const q=search.value.toLowerCase();
-  const data=JSON.parse(localStorage.getItem('emr')||'[]');
-  const t=document.getElementById('records');
-  t.innerHTML='';
-  data.filter(r=>r.name.toLowerCase().includes(q)||r.mobile.includes(q))
-      .forEach((r,i)=>{
-        const row=t.insertRow();
-        row.insertCell(0).innerText=r.opd;
-        row.insertCell(1).innerText=r.date;
-        row.insertCell(2).innerText=r.name;
-        row.insertCell(3).innerText=r.mobile;
-        row.insertCell(4).innerText=r.age;
-        row.insertCell(5).innerText=r.dx;
-        row.insertCell(6).innerText=r.rx;
-        row.insertCell(7).innerHTML=
-          `<button class="secondary" onclick="printRec(${i})">Print</button>`;
-      });
+let q=search.value.toLowerCase();
+let data=JSON.parse(localStorage.getItem('emr')||'[]');
+records.innerHTML='';
+data.filter(r=>r.name.toLowerCase().includes(q)||r.mobile.includes(q))
+.forEach((r,i)=>{
+let row=records.insertRow();
+row.insertCell(0).innerText=r.uhid;
+row.insertCell(1).innerText=r.opd;
+row.insertCell(2).innerText=r.date;
+row.insertCell(3).innerText=r.name;
+row.insertCell(4).innerText=(r.chronic||[]).join(',');
+row.insertCell(5).innerText=r.dx;
+row.insertCell(6).innerText=r.rx;
+row.insertCell(7).innerText=r.fu||'-';
+row.insertCell(8).innerHTML=`<button onclick="printRec(${i})">Print</button>`;
+});
 }
 
-/* ========= PRINT ========= */
+/* ---------------- HINDI TRANSLATION ---------------- */
+function translateDoseToHindi(t){
+const m={
+"OD":"दिन में एक बार","BD":"दिन में दो बार","TDS":"दिन में तीन बार",
+"HS":"रात में","SOS":"ज़रूरत पड़ने पर",
+"before food":"भोजन से पहले","after food":"भोजन के बाद",
+"with food":"भोजन के साथ","days":"दिन"
+};
+Object.keys(m).forEach(k=>{
+t=t.replace(new RegExp("\\b"+k+"\\b","gi"),m[k]);
+});
+return t;
+}
+
+/* ---------------- PRINT ---------------- */
 function printRec(i){
-  const r=JSON.parse(localStorage.getItem('emr'))[i];
-  const w=window.open('','');
-  w.document.write(`
-    <h2>Prescription</h2><hr>
-    <p><b>Name:</b> ${r.name}</p>
-    <p><b>Age:</b> ${r.age}</p>
-    <p><b>Date:</b> ${r.date}</p>
-    <p><b>Diagnosis:</b> ${r.dx}</p>
-    <p><b>Treatment:</b><br>${r.rx.replaceAll('|','<br>')}</p>
-    <br><p>Doctor Signature</p>
-  `);
-  w.print();
-}
+const r=JSON.parse(localStorage.getItem('emr'))[i];
+const T={
+en:{rx:"Rx",dx:"Diagnosis",ch:"Chronic",fu:"Follow-up",sg:"Doctor Signature"},
+hi:{rx:"दवा",dx:"निदान",ch:"दीर्घ रोग",fu:"पुनः जांच",sg:"डॉक्टर हस्ताक्षर"}
+}[PRINT_LANG];
 
-/* ========= EXPORT CSV ========= */
-function exportCSV(){
-  const data=JSON.parse(localStorage.getItem('emr')||'[]');
-  let csv='OPD,Date,Name,Mobile,Age,Gender,Diagnosis,Treatment\n';
-  data.forEach(r=>{
-    csv+=`${r.opd},${r.date},${r.name},${r.mobile},${r.age},${r.gender},${r.dx},"${r.rx}"\n`;
-  });
-  const blob=new Blob([csv],{type:'text/csv'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='emr_data.csv';
-  a.click();
-}
+const rxRows=r.rx.split('|').map((x,j)=>`
+<tr><td>${j+1}</td><td>${
+PRINT_LANG==='hi'?translateDoseToHindi(x.trim()):x.trim()
+}</td></tr>`).join('');
 
-/* ========= CLEAR ========= */
-function clearForm(){
-  patientName.value='';
-  mobile.value='';
-  age.value='';
-  diagnosis.value='';
-  dose.value='';
-  rxList=[];
-  document.getElementById('medList').innerHTML='';
+const qr=encodeURIComponent(`UHID:${r.uhid}|Mob:${r.mobile}|Date:${r.date}`);
+
+const w=window.open('','');
+w.document.write(`
+<html><head><style>
+body{font-family:Arial;font-size:14px;margin:20px}
+.wm{position:fixed;top:40%;left:20%;font-size:80px;opacity:.05;transform:rotate(-30deg)}
+table{width:100%;border-collapse:collapse}
+td{padding:6px}
+</style></head>
+<body>
+<div class="wm">PRESCRIPTION</div>
+<h3 style="text-align:center">YOUR CLINIC NAME</h3>
+<p>UHID:${r.uhid} | OPD:${r.opd} | ${r.date}</p>
+<p>${r.name}, ${r.age} | ${r.gender}</p>
+<p><b>${T.ch}:</b> ${(r.chronic||[]).join(', ')}</p>
+<p><b>${T.dx}:</b> ${r.dx}</p>
+<table>${rxRows}</table>
+<p><b>${T.fu}:</b> ${r.fu||'As advised'}</p>
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qr}">
+<p style="text-align:right">${T.sg}</p>
+</body></html>`);
+w.print();
 }
 
 /* INIT */
-loadMeds();
-loadRecords();
+loadMeds();loadRecords();
 </script>
 </body>
 </html>
