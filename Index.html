@@ -37,7 +37,6 @@ li{margin-bottom:6px}
 
 <div class="container">
 
-<!-- ================= ADD VISIT ================= -->
 <div class="card">
 <h3>Add Patient Visit</h3>
 
@@ -81,48 +80,17 @@ li{margin-bottom:6px}
 <label>Follow-up Date</label>
 <input id="followup" type="date">
 
-<hr>
-
-<label>Add Medicine</label>
-
-<div class="flex">
-<select id="medicine"></select>
-<input id="customDrug" placeholder="Or type new drug">
-</div>
-
-<div class="flex">
-<input id="dose" placeholder="Dose / Instructions">
-<select id="preset">
-<option value="">Preset</option>
-<option>OD</option><option>BD</option>
-<option>TDS</option><option>HS</option>
-<option>SOS</option>
-</select>
-<button type="button" class="secondary" onclick="applyPreset()">Apply</button>
-</div>
-
-<button type="button" class="secondary" onclick="addMedicine()">Add Medicine</button>
-<ul id="medList"></ul>
-
 <button type="button" onclick="saveRecord()">Save Visit</button>
 </div>
 
-<!-- ================= RECORDS ================= -->
 <div class="card">
 <h3>Patient Records</h3>
-
-<div class="no-print">
-<button class="secondary" onclick="setLang('en')">English</button>
-<button class="secondary" onclick="setLang('hi')">हिंदी</button>
-</div>
-
 <input id="search" placeholder="Search by name or mobile" onkeyup="loadRecords()">
 
 <table>
 <thead>
 <tr>
 <th>UHID</th><th>OPD</th><th>Date</th><th>Name</th>
-<th>Chronic</th><th>Dx</th><th>Rx</th><th>FU</th>
 <th class="no-print">Print</th>
 </tr>
 </thead>
@@ -133,56 +101,7 @@ li{margin-bottom:6px}
 </div>
 
 <script>
-/* ================= GLOBAL ================= */
-let PRINT_LANG='en';
-function setLang(l){PRINT_LANG=l;alert('Print language set');}
-
-/* ================= MED MASTER ================= */
-let meds=JSON.parse(localStorage.getItem('meds'))||[
-"Paracetamol","Pantoprazole","Amoxiclav","Azithromycin",
-"Metformin","Amlodipine","Telmisartan","Atorvastatin",
-"Calcium","Vitamin D3"
-];
-let rxList=[];
-
-function loadMeds(){
-medicine.innerHTML='';
-meds.forEach(m=>{
-let o=document.createElement('option');
-o.value=o.textContent=m;
-medicine.appendChild(o);
-});
-}
-
-function applyPreset(){
-if(preset.value && !dose.value.includes(preset.value))
-dose.value+=' '+preset.value;
-}
-
-function addMedicine(){
-let drug=customDrug.value.trim()||medicine.value;
-let d=dose.value.trim();
-if(!drug||!d){alert('Enter drug and dose');return;}
-if(!meds.includes(drug)){
-meds.push(drug);
-localStorage.setItem('meds',JSON.stringify(meds));
-loadMeds();
-}
-rxList.push(`${drug} – ${d}`);
-customDrug.value=''; dose.value='';
-renderRx();
-}
-
-function renderRx(){
-medList.innerHTML='';
-rxList.forEach((x,i)=>{
-let li=document.createElement('li');
-li.innerHTML=`${x} <button onclick="rxList.splice(${i},1);renderRx()">Remove</button>`;
-medList.appendChild(li);
-});
-}
-
-/* ================= UHID / OPD ================= */
+/* ================= DATA ================= */
 function getUHID(m){
 let map=JSON.parse(localStorage.getItem('uhidMap')||'{}');
 if(!map[m]){
@@ -201,49 +120,22 @@ localStorage.setItem('opd',JSON.stringify(o));
 return o.count;
 }
 
-/* ================= CHRONIC ================= */
-function getChronic(){
-return [...document.querySelectorAll('.tags input:checked')].map(x=>x.value);
-}
-function setChronic(a){
-document.querySelectorAll('.tags input').forEach(c=>c.checked=a.includes(c.value));
-}
+function loadLastVisit(){}
 
-/* ================= FOLLOW-UP LOAD ================= */
-function loadLastVisit(){
-let m=mobile.value.trim();
-if(m.length<5)return;
-let data=JSON.parse(localStorage.getItem('emr')||'[]');
-let last=[...data].reverse().find(r=>r.mobile===m);
-if(!last)return;
-diagnosis.value=last.dx;
-rxList=last.rx.split('|').map(x=>x.trim());
-renderRx();
-setChronic(last.chronic||[]);
-}
-
-/* ================= SAVE ================= */
 function saveRecord(){
 let n=patientName.value.trim(), m=mobile.value.trim();
 if(n.length<2||m.length<5){alert('Name & mobile required');return;}
-if(rxList.length===0){alert('Add medicine');return;}
-
 let data=JSON.parse(localStorage.getItem('emr')||'[]');
-let rec={
+data.push({
 uhid:getUHID(m),
 opd:getOPD(),
 date:new Date().toLocaleString(),
-name:n,mobile:m,age:age.value,gender:gender.value,
-dx:diagnosis.value,chronic:getChronic(),
-rx:rxList.join(' | '),fu:followup.value
-};
-data.push(rec);
+name:n, mobile:m, age:age.value, gender:gender.value
+});
 localStorage.setItem('emr',JSON.stringify(data));
-rxList=[]; medList.innerHTML='';
 loadRecords();
 }
 
-/* ================= LOAD RECORDS ================= */
 function loadRecords(){
 let q=search.value.toLowerCase();
 let data=JSON.parse(localStorage.getItem('emr')||'[]');
@@ -255,36 +147,43 @@ row.insertCell(0).innerText=r.uhid;
 row.insertCell(1).innerText=r.opd;
 row.insertCell(2).innerText=r.date;
 row.insertCell(3).innerText=r.name;
-row.insertCell(4).innerText=(r.chronic||[]).join(',');
-row.insertCell(5).innerText=r.dx;
-row.insertCell(6).innerText=r.rx;
-row.insertCell(7).innerText=r.fu||'-';
-row.insertCell(8).innerHTML=`<button onclick="printRec(${i})">Print</button>`;
+row.insertCell(4).innerHTML=`<button onclick="printRec(${i})">Print</button>`;
 });
 }
 
-/* ================= PRINT (OPD CARD STYLE, BLANK NOTES) ================= */
+/* ================= PRINT – A4 OPD CARD ================= */
 function printRec(i){
 const r=JSON.parse(localStorage.getItem('emr'))[i];
 const qr=encodeURIComponent(`UHID:${r.uhid}|Mob:${r.mobile}|Date:${r.date}`);
 const w=window.open('','');
 
 w.document.write(`
-<html><head>
+<html>
+<head>
 <style>
-body{font-family:Arial;font-size:12px;margin:10px}
+@page { size:A4; margin:15mm; }
+body{font-family:Arial;font-size:12px;margin:0}
+.page{width:180mm;min-height:257mm;margin:auto;
+display:flex;flex-direction:column}
 table{width:100%;border-collapse:collapse}
 td{border:1px solid #000;padding:4px;vertical-align:top}
 .noborder td{border:none}
-.box{height:60px}
-.bigbox{height:260px}
+.box{height:45mm}
+.bigbox{height:110mm}
 .center{text-align:center}
+.footer{margin-top:auto;text-align:center;font-size:11px}
+.signature{text-align:right;margin-top:25mm}
 </style>
-</head><body>
+</head>
+
+<body>
+<div class="page">
 
 <table class="noborder">
 <tr>
-<td style="width:15%"><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${qr}"></td>
+<td style="width:15%">
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${qr}">
+</td>
 <td style="width:70%" class="center">
 <b>SHREE RAM CLINIC</b><br>
 ADDRESS – BIRRA, CHAMPA.<br>
@@ -334,17 +233,19 @@ Department of General Medicine
 </tr>
 </table>
 
-<p class="center">Please retain this card for future visits. UHID: ${r.uhid}</p>
+<div class="footer">
+Please retain this card for future visits. UHID: ${r.uhid}
+<div class="signature">Doctor Signature & Stamp</div>
+</div>
 
-<p style="text-align:right;margin-top:40px">Doctor Signature & Stamp</p>
-
-</body></html>
+</div>
+</body>
+</html>
 `);
 w.print();
 }
 
-/* INIT */
-loadMeds();loadRecords();
+loadRecords();
 </script>
 </body>
   </html>
