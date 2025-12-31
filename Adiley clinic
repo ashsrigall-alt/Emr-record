@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NAWAGARH ADILEY CLINIC – EMR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root{
+  --brand:#0b3c5d;
+  --bg:#f2f4f7;
+}
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg);
+  color:#111;
+}
+header{
+  background:var(--brand);
+  color:#fff;
+  text-align:center;
+  padding:14px;
+}
+.container{
+  max-width:1100px;
+  margin:16px auto;
+  padding:12px;
+}
+.card{
+  background:#fff;
+  padding:14px;
+  border-radius:8px;
+  margin-bottom:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+label{
+  font-weight:700;
+  display:block;
+  margin-top:8px;
+}
+input,select,textarea{
+  width:100%;
+  padding:9px;
+  margin-top:6px;
+  border:1px solid #ccc;
+  border-radius:4px;
+  font-size:14px;
+}
+.flex{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.flex>div{
+  flex:1;
+  min-width:160px;
+}
+button{
+  background:var(--brand);
+  color:#fff;
+  border:none;
+  padding:10px 14px;
+  border-radius:6px;
+  cursor:pointer;
+}
+button.secondary{
+  background:#555;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  border:1px solid #bbb;
+  padding:8px;
+  font-size:13px;
+}
+th{background:#eef3f7}
+ul{padding-left:18px}
+@media print{
+  .no-print{display:none}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div style="font-size:20px;font-weight:700">NAWAGARH ADILEY CLINIC</div>
+  <div style="font-size:13px">
+    ADDRESS – NAWAGARH, CHHATTISGARH · Department of General Medicine
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ================= ADD VISIT ================= -->
+<div class="card">
+<h3>Add Patient Visit</h3>
+
+<div class="flex">
+  <div>
+    <label>Patient Name *</label>
+    <input id="name">
+  </div>
+  <div>
+    <label>Mobile *</label>
+    <input id="mobile">
+  </div>
+</div>
+
+<label>Address</label>
+<input id="address" placeholder="Village / Area">
+
+<div class="flex">
+  <div>
+    <label>Age</label>
+    <input id="age" type="number">
+  </div>
+  <div>
+    <label>Gender</label>
+    <select id="gender">
+      <option>Male</option>
+      <option>Female</option>
+      <option>Other</option>
+    </select>
+  </div>
+</div>
+
+<label>Diagnosis</label>
+<input id="dx">
+
+<hr>
+
+<h4>Add Medicine</h4>
+
+<div class="flex">
+  <div>
+    <input id="drug" placeholder="Medicine name">
+  </div>
+  <div>
+    <input id="dose" placeholder="Dose (e.g. 500mg BD AF)">
+  </div>
+</div>
+
+<div style="margin-top:8px">
+  <button onclick="addRx()">Add Medicine</button>
+</div>
+
+<ul id="rxList"></ul>
+
+<div style="margin-top:12px">
+  <button onclick="saveVisit()">Save Visit</button>
+  <button class="secondary" onclick="exportCSV()">Export CSV</button>
+</div>
+</div>
+
+<!-- ================= RECORDS ================= -->
+<div class="card">
+<h3>Patient Records</h3>
+
+<div class="no-print flex">
+  <div>
+    <button class="secondary" onclick="lang='en'">English</button>
+    <button class="secondary" onclick="lang='hi'">हिंदी</button>
+  </div>
+  <div style="flex:1">
+    <input id="search" placeholder="Search name/mobile" oninput="loadTable()">
+  </div>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>UHID</th><th>OPD</th><th>Date</th>
+<th>Name</th><th>Mobile</th><th>Print</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+let rx=[];
+let lang='en';
+
+/* ---------- RX ---------- */
+function addRx(){
+  const d=document.getElementById('drug').value.trim();
+  const ds=document.getElementById('dose').value.trim();
+  if(!d||!ds){alert('Enter medicine & dose');return;}
+  rx.push(d+' – '+ds);
+  document.getElementById('drug').value='';
+  document.getElementById('dose').value='';
+  renderRx();
+}
+function renderRx(){
+  const ul=document.getElementById('rxList');
+  ul.innerHTML='';
+  rx.forEach((r,i)=>{
+    const li=document.createElement('li');
+    li.innerHTML=r+' <button class="secondary" onclick="delRx('+i+')">x</button>';
+    ul.appendChild(li);
+  });
+}
+function delRx(i){rx.splice(i,1);renderRx();}
+
+/* ---------- UHID / OPD ---------- */
+function getUHID(m){
+  const map=JSON.parse(localStorage.getItem('uhid')||'{}');
+  if(!map[m]){
+    map[m]='UH'+(100000+Object.keys(map).length);
+    localStorage.setItem('uhid',JSON.stringify(map));
+  }
+  return map[m];
+}
+function getOPD(){
+  const k='opd';
+  const t=new Date().toDateString();
+  let o=JSON.parse(localStorage.getItem(k)||'{}');
+  if(o.date!==t){o={date:t,n:1}}
+  else{o.n++}
+  localStorage.setItem(k,JSON.stringify(o));
+  return o.n;
+}
+
+/* ---------- SAVE ---------- */
+function saveVisit(){
+  const name=nameEl().value.trim();
+  const mobile=mobileEl().value.trim();
+  if(name.length<2||mobile.length<4){alert('Invalid details');return;}
+  const data=JSON.parse(localStorage.getItem('emr')||'[]');
+  data.push({
+    uhid:getUHID(mobile),
+    opd:getOPD(),
+    date:new Date().toLocaleString(),
+    name, mobile,
+    address:addressEl().value,
+    age:ageEl().value,
+    gender:genderEl().value,
+    dx:dxEl().value,
+    rx:rx.join('|')
+  });
+  localStorage.setItem('emr',JSON.stringify(data));
+  rx=[];renderRx();
+  document.querySelectorAll('input').forEach(i=>i.value='');
+  loadTable();
+}
+
+/* ---------- TABLE ---------- */
+function loadTable(){
+  const q=searchEl().value.toLowerCase();
+  const t=document.getElementById('table');
+  t.innerHTML='';
+  const data=JSON.parse(localStorage.getItem('emr')||'[]');
+  data.filter(r=>r.name.toLowerCase().includes(q)||r.mobile.includes(q))
+  .forEach((r,i)=>{
+    const row=t.insertRow();
+    row.insertCell().innerText=r.uhid;
+    row.insertCell().innerText=r.opd;
+    row.insertCell().innerText=r.date;
+    row.insertCell().innerText=r.name;
+    row.insertCell().innerText=r.mobile;
+    row.insertCell().innerHTML=
+      `<button onclick="printRec(${i})">Print</button>`;
+  });
+}
+
+/* ---------- PRINT ---------- */
+function printRec(i){
+  const r=JSON.parse(localStorage.getItem('emr'))[i];
+  const rxHTML=(r.rx||'').split('|').map((x,j)=>`${j+1}. ${x}`).join('<br>');
+  const w=window.open('','_blank');
+  w.document.write(`
+<!doctype html><html><head>
+<style>
+@page{size:A4;margin:15mm}
+body{font-family:Arial;font-size:12px}
+table{width:100%;border-collapse:collapse}
+td{border:1px solid #000;padding:6px}
+</style>
+</head><body>
+<h2 style="text-align:center">NAWAGARH ADILEY CLINIC</h2>
+<p style="text-align:center">Nawagarh, Chhattisgarh</p>
+<table>
+<tr><td>Name: ${r.name}</td><td>Age: ${r.age}</td><td>Gender: ${r.gender}</td></tr>
+<tr><td colspan="3">Address: ${r.address}</td></tr>
+<tr><td colspan="3"><b>Diagnosis:</b> ${r.dx}</td></tr>
+<tr><td>UHID: ${r.uhid}</td><td>OPD: ${r.opd}</td><td>Date: ${r.date}</td></tr>
+</table>
+<br>
+<b>Rx:</b><br><br>${rxHTML}
+<br><br><br>
+<div style="text-align:right">Dr. Ashwini Srivastav</div>
+</body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),500);
+}
+
+/* ---------- CSV ---------- */
+function exportCSV(){
+  const d=JSON.parse(localStorage.getItem('emr')||'[]');
+  if(!d.length){alert('No data');return;}
+  let c='UHID,OPD,Date,Name,Mobile,Address,Age,Gender,Diagnosis,Medicines\n';
+  d.forEach(r=>{
+    c+=`"${r.uhid}","${r.opd}","${r.date}","${r.name}","${r.mobile}",
+"${r.address}","${r.age}","${r.gender}","${r.dx}","${r.rx}"\n`;
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));
+  a.download='nawagarh_emr.csv';a.click();
+}
+
+/* ---------- SHORTCUTS ---------- */
+const nameEl=()=>document.getElementById('name');
+const mobileEl=()=>document.getElementById('mobile');
+const addressEl=()=>document.getElementById('address');
+const ageEl=()=>document.getElementById('age');
+const genderEl=()=>document.getElementById('gender');
+const dxEl=()=>document.getElementById('dx');
+const searchEl=()=>document.getElementById('search');
+
+loadTable();
+</script>
+
+</body>
+</html>
