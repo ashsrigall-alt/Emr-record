@@ -1,207 +1,618 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>SHREE RAM CLINIC – OPD EMR</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8" />
+<title>SHREE RAM CLINIC</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Shree Ram Clinic" />
 
 <style>
-body{font-family:Arial;font-size:13px}
-table{border-collapse:collapse;width:100%}
-td,th{border:1px solid #000;padding:4px;vertical-align:top}
-.header{text-align:center;font-weight:700;font-size:16px}
-.sub{text-align:center;font-size:12px}
-.no-border td{border:none}
-.visit-box{height:40px}
-textarea{width:100%;height:100px}
-input{width:100%}
-button{margin:2px}
-@page{size:A4;margin:10mm}
+  /* --- App styles --- */
+  :root{--brand:#083d77;--muted:#f0f3f6}
+  body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:var(--muted);margin:0;color:#111; -webkit-tap-highlight-color: transparent;}
+  header{background:var(--brand);color:#fff;padding:14px 12px;text-align:center; padding-top: 40px;}
+  .container{max-width:1100px;margin:14px auto;padding:12px; padding-bottom: 80px;}
+  .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+  h3{margin:0 0 8px 0; font-size: 1.2rem;}
+  label{display:block;font-weight:600;margin-top:10px; color:#444;}
+  input,select,textarea{width:100%;padding:12px;margin-top:6px;font-size:16px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box; background-color: #fff; appearance: none;}
+  .flex{display:flex;gap:12px;flex-wrap:wrap}
+  .flex>div{flex:1;min-width:160px}
+  button{background:var(--brand);color:#fff;border:none;padding:12px 16px;border-radius:8px;cursor:pointer;font-size:16px; font-weight: 600; touch-action: manipulation;}
+  button:active {opacity: 0.8; transform: scale(0.98);}
+  button.secondary{background:#6c757d}
+  ul{padding-left:18px;margin:6px 0}
+  li{margin-bottom:6px}
+  table{width:100%;border-collapse:collapse; background: #fff; border-radius: 8px; overflow: hidden;}
+  th,td{border:1px solid #ddd;padding:10px;text-align:left;font-size:14px}
+  th{background:#eef3f7; font-weight: 600;}
+  .no-print{margin-bottom:12px}
+  @media print{.no-print{display:none}}
+  .small{font-size:14px;color:#444}
+  .muted{color:#666;font-size:13px}
+  .pill{background:#eee;padding:6px 10px;border-radius:14px;margin-right:6px;display:inline-block}
+  .action-btn{padding:6px 10px;font-size:13px;border-radius:6px;background:#f0f0f0;color:#111;border:0;cursor:pointer}
+  .danger{background:#ff4d4d;color:#fff}
 </style>
 </head>
-
 <body>
+<header>
+  <div style="font-size:20px;font-weight:700">SHREE RAM CLINIC</div>
+  <div style="font-size:13px; opacity: 0.9">Dr. Ashwini Srivastav &middot; Department of General Medicine</div>
+</header>
 
-<!-- ================= HEADER ================= -->
-<table class="no-border">
-<tr>
-<td style="width:20%">
-<img id="qrImg" width="90">
-</td>
-<td style="width:60%" class="header">
-SHREE RAM CLINIC<br>
-<span class="sub">ADDRESS – BIRRA, CHAMPA</span><br>
-<span class="sub">Department of General Medicine</span>
-</td>
-<td style="width:20%;text-align:right">
-<img id="barImg" width="140">
-</td>
-</tr>
-</table>
+<div class="container">
 
-<!-- ================= PATIENT DETAILS ================= -->
-<table>
-<tr>
-<td>Name: <span id="pname">Ashwin</span></td>
-<td>Age: <span id="page">56</span></td>
-<td>Gender: <span id="pgender">Male</span></td>
-</tr>
-<tr>
-<td>Mobile: <span id="pmobile">7908501713</span></td>
-<td>UHID: <span id="puhid">UH100000</span></td>
-<td>OPD No: <span id="opdno">2</span></td>
-</tr>
-<tr>
-<td colspan="2">Date: <span id="pdate">31/12/2025</span></td>
-<td>Doctor: Dr. Ashwini Srivastav</td>
-</tr>
-</table>
+  <div class="card">
+    <h3>Add Patient Visit</h3>
 
-<!-- ================= VISITS ================= -->
-<table>
-<tr>
-<th>Visit 1</th>
-<th>Visit 2</th>
-<th>Visit 3</th>
-<th>Visit 4</th>
-</tr>
-<tr>
-<td class="visit-box"></td>
-<td class="visit-box"></td>
-<td class="visit-box"></td>
-<td class="visit-box"></td>
-</tr>
-</table>
+    <div class="flex">
+      <div>
+        <label for="patientName">Patient Name *</label>
+        <input id="patientName" type="text" autocomplete="off" />
+      </div>
+      <div>
+        <label for="mobile">Mobile *</label>
+        <input id="mobile" type="tel" inputmode="numeric" autocomplete="off" />
+      </div>
+    </div>
 
-<!-- ================= NOTES / RX ================= -->
-<table>
-<tr>
-<th style="width:50%">Clinical Notes</th>
-<th style="width:50%">Advice / Treatment</th>
-</tr>
-<tr>
-<td>
-<textarea id="notes"></textarea>
-</td>
-<td>
-Diagnosis:
-<input id="diagnosis"><br><br>
+    <label for="address">Address</label>
+    <input id="address" placeholder="Village / Area / Street" />
 
-Medicine:
-<input id="drug"><br>
-Dose:
-<input id="dose"><br>
+    <div class="flex">
+      <div>
+        <label for="age">Age</label>
+        <input id="age" type="number" min="0" />
+      </div>
+      <div>
+        <label for="gender">Gender</label>
+        <select id="gender"><option>Male</option><option>Female</option><option>Other</option></select>
+      </div>
+    </div>
 
-<button onclick="addDose('1-0-1')">1-0-1</button>
-<button onclick="addDose('1-1-1')">1-1-1</button>
-<button onclick="addDose('1-0-0')">1-0-0</button>
-<button onclick="addDose('0-0-1')">0-0-1</button>
-<br><br>
+    <label for="diagnosis">Diagnosis</label>
+    <input id="diagnosis" placeholder="Primary diagnosis / provisional" />
 
-Duration:
-<input id="duration"><br><br>
+    <label>Chronic Diseases</label>
+    <div class="small" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;">
+      <label style="margin:0; background:#eee; padding:5px 10px; border-radius:15px;"><input type="checkbox" class="chronic" value="DM" /> DM</label>
+      <label style="margin:0; background:#eee; padding:5px 10px; border-radius:15px;"><input type="checkbox" class="chronic" value="HTN" /> HTN</label>
+      <label style="margin:0; background:#eee; padding:5px 10px; border-radius:15px;"><input type="checkbox" class="chronic" value="COPD" /> COPD</label>
+      <label style="margin:0; background:#eee; padding:5px 10px; border-radius:15px;"><input type="checkbox" class="chronic" value="Asthma" /> Asthma</label>
+      <label style="margin:0; background:#eee; padding:5px 10px; border-radius:15px;"><input type="checkbox" class="chronic" value="CKD" /> CKD</label>
+      <label style="margin:0; background:#eee; padding:5px 10px; border-radius:15px;"><input type="checkbox" class="chronic" value="Thyroid" /> Thyroid</label>
+    </div>
 
-<button onclick="addMed()">Add</button>
-<ul id="rxList"></ul>
+    <label for="followup">Follow-up Date</label>
+    <input id="followup" type="date" />
 
-Follow-up:
-<input id="followup" type="date"><br><br>
+    <hr style="margin:20px 0; border:0; border-top:1px solid #eee;" />
 
-<button onclick="saveVisit()">FINAL SAVE VISIT</button>
-</td>
-</tr>
-</table>
+    <h4 style="margin:0 0 10px 0; color:var(--brand)">Prescribe Medicine</h4>
 
-<p style="text-align:center;font-size:11px">
-Please retain this card for future visits. UHID: <span id="footuhid">UH100000</span>
-</p>
+    <div class="flex">
+      <div>
+        <label for="medicine">Medicine List</label>
+        <select id="medicine" onchange="if(this.value) document.getElementById('customDrug').value = this.value;"></select>
+      </div>
+      <div>
+        <label for="customDrug">Drug Name</label>
+        <input id="customDrug" placeholder="Type or Select..." />
+      </div>
+    </div>
 
-<p style="text-align:right">
-Dr. Ashwini Srivastav, MBBS<br>
-Reg. No.: 101085 / WBMC
-</p>
+    <div class="flex">
+      <div>
+        <label for="dose">Dose & Instruction</label>
+        <input id="dose" placeholder="e.g. 1-0-1 After Food" />
+      </div>
+      <div>
+        <label for="preset">Quick Dose</label>
+        <select id="preset" onchange="applyPreset()">
+          <option value="">Select...</option>
+          <option value="1-0-0">1-0-0 (OD)</option>
+          <option value="1-0-1">1-0-1 (BD)</option>
+          <option value="1-1-1">1-1-1 (TDS)</option>
+          <option value="0-0-1">0-0-1 (HS)</option>
+          <option value="SOS">SOS</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <button type="button" onclick="addMedicine()" style="width:100%">+ Add Medicine</button>
+    </div>
+
+    <ul id="medList" style="margin-top:16px; list-style:none; padding:0;"></ul>
+
+    <div style="margin-top:20px; display:flex; gap:10px;">
+      <button type="button" onclick="saveRecord()" style="flex:2">Save Visit</button>
+      <button type="button" class="secondary" onclick="exportCSV()" style="flex:1">Backup</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Records</h3>
+
+    <div class="no-print" style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+      <div style="flex:1">
+        <input id="search" placeholder="Search patient or mobile..." oninput="loadRecords()" style="margin-top:0" />
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="muted">Show</div>
+        <select id="limit" onchange="loadRecords()" class="small">
+          <option value="20">Last 20</option>
+          <option value="50">Last 50</option>
+          <option value="100">Last 100</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Date</th><th>Action</th></tr>
+        </thead>
+        <tbody id="records"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
 
 <script>
-let visits = [];
-let meds = [];
-let PRINT_LANG = 'hi';
-const AUTO_KEY = "emr_autosave_visit";
+/* ================== References ================== */
+const patientNameEl = document.getElementById('patientName');
+const mobileEl = document.getElementById('mobile');
+const addressEl = document.getElementById('address');
+const ageEl = document.getElementById('age');
+const genderEl = document.getElementById('gender');
+const diagnosisEl = document.getElementById('diagnosis');
+const followupEl = document.getElementById('followup');
 
-/* ---------- Dose helpers ---------- */
-function addDose(d){
-  dose.value = (dose.value + ' ' + d).trim();
-}
+const medicineEl = document.getElementById('medicine');
+const customDrugEl = document.getElementById('customDrug');
+const doseEl = document.getElementById('dose');
+const presetEl = document.getElementById('preset');
+const medListEl = document.getElementById('medList');
 
-function doseHindi(d){
-  return d
-   .replace(/1-0-1/g,'सुबह-शाम')
-   .replace(/1-1-1/g,'सुबह-दोपहर-शाम')
-   .replace(/1-0-0/g,'केवल सुबह')
-   .replace(/0-0-1/g,'केवल रात')
-   .replace(/after food/gi,'भोजन के बाद')
-   .replace(/before food/gi,'भोजन से पहले');
-}
+const recordsTbody = document.getElementById('records');
+const searchEl = document.getElementById('search');
+const limitEl = document.getElementById('limit');
 
-/* ---------- Medicines ---------- */
-function addMed(){
-  if(!drug.value || !dose.value) return;
-  meds.push({
-    drug: drug.value,
-    dose: dose.value,
-    duration: duration.value
+/* ================== Medicine master (persisted) ================== */
+let meds = JSON.parse(localStorage.getItem('meds_v3') || 'null') || [
+  "Paracetamol 650","Pantoprazole 40","Amoxiclav 625","Azithromycin 500",
+  "Metformin 500","Amlodipine 5","Telmisartan 40","Atorvastatin 10","Montelukast-L"
+];
+function loadMeds(){
+  medicineEl.innerHTML = '<option value="">-- Select Medicine --</option>';
+  // create a copy then sort so we don't permanently reorder stored array in unexpected ways
+  Array.from(meds).sort((a,b)=>a.localeCompare(b)).forEach(m=>{
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m;
+    medicineEl.appendChild(opt);
   });
-  drug.value='';dose.value='';duration.value='';
-  renderRx();
 }
+loadMeds();
 
+/* ================== RX list (current visit) ================== */
+let rxList = [];
 function renderRx(){
-  rxList.innerHTML='';
-  meds.forEach(m=>{
-    let li=document.createElement('li');
-    li.innerHTML=`${m.drug} – ${m.dose} (${m.duration})`;
-    rxList.appendChild(li);
+  medListEl.innerHTML = '';
+  rxList.forEach((line, i)=>{
+    const li = document.createElement('li');
+    li.style.background = '#f8f9fa';
+    li.style.padding = '8px';
+    li.style.borderRadius = '6px';
+    li.style.marginBottom = '6px';
+    li.style.display = 'flex';
+    li.style.justifyContent = 'space-between';
+    li.style.alignItems = 'center';
+
+    const text = document.createElement('span'); 
+    text.innerHTML = `<strong>${i+1}.</strong> ${escapeHtml(line)}`;
+
+    const right = document.createElement('div');
+    right.style.display = 'flex'; right.style.gap = '8px';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button'; copyBtn.textContent = 'Copy'; copyBtn.className='action-btn';
+    copyBtn.onclick = ()=>{ navigator.clipboard?.writeText(line).then(()=>alert('Copied')); };
+
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.textContent = 'Delete'; 
+    btn.className = 'action-btn danger';
+    btn.onclick = ()=>{ if(confirm('Remove this medicine?')){ rxList.splice(i,1); renderRx(); } };
+
+    right.appendChild(copyBtn); right.appendChild(btn);
+    li.appendChild(text); li.appendChild(right);
+    medListEl.appendChild(li);
   });
 }
 
-/* ---------- AUTO SAVE ---------- */
-function autoSaveVisit(){
-  const data = {
-    diagnosis: diagnosis.value,
-    notes: notes.value,
-    meds: meds,
-    followup: followup.value
+/* ================== Preset ================== */
+function applyPreset(){
+  const p = presetEl.value;
+  if(!p) return;
+  if(!doseEl.value.includes(p)) doseEl.value = (doseEl.value + ' ' + p).trim();
+}
+
+/* ================== Add Medicine ================== */
+function addMedicine(){
+  const drug = (customDrugEl.value.trim() || medicineEl.value || '').trim();
+  const d = doseEl.value.trim();
+  if(!drug){ alert('Please enter or select a medicine'); customDrugEl.focus(); return; }
+  if(!d){ alert('Please enter dosage'); doseEl.focus(); return; }
+
+  // save new drug to master list if not exist
+  if(!meds.includes(drug)){
+    meds.push(drug);
+    localStorage.setItem('meds_v3', JSON.stringify(meds));
+    loadMeds();
+  }
+  // Use a consistent separator (en dash with spaces) but allow other types when parsing
+  rxList.push(`${drug} – ${d}`);
+  customDrugEl.value=''; doseEl.value=''; presetEl.value='';
+  renderRx();
+}
+
+/* ================== Helpers ================== */
+function getUHID(mobile){
+  const key = 'uhid_map_v3';
+  const map = JSON.parse(localStorage.getItem(key) || '{}');
+  if(!map[mobile]){
+    map[mobile] = 'UH' + (100000 + Object.keys(map).length);
+    localStorage.setItem(key, JSON.stringify(map));
+  }
+  return map[mobile];
+}
+
+function getOPD(){
+  const key = 'opd_v3';
+  const obj = JSON.parse(localStorage.getItem(key) || '{}');
+  const today = new Date().toDateString();
+  if(obj.date !== today){
+    const newObj = { date: today, count: 1 };
+    localStorage.setItem(key, JSON.stringify(newObj));
+    return newObj.count;
+  } else {
+    obj.count = (obj.count || 0) + 1;
+    localStorage.setItem(key, JSON.stringify(obj));
+    return obj.count;
+  }
+}
+
+function getChronic(){
+  return Array.from(document.querySelectorAll('.chronic:checked')).map(c=>c.value);
+}
+function setChronic(list){
+  document.querySelectorAll('.chronic').forEach(cb=>cb.checked = list.includes(cb.value));
+}
+
+/* ================== Save record ================== */
+/* Added an `id` (Date.now) and `savedAtISO` for reliable lookup; retains older records too. */
+function saveRecord(){
+  const name = patientNameEl.value.trim();
+  const mobile = mobileEl.value.trim();
+  if(name.length < 2){ alert('Enter patient name'); patientNameEl.focus(); return; }
+  if(mobile.length < 10){ alert('Enter valid mobile number'); mobileEl.focus(); return; }
+
+  const now = new Date();
+  const rec = {
+    id: Date.now(),                     // unique id for stable lookup
+    savedAtISO: now.toISOString(),      // canonical timestamp
+    displayDate: now.toLocaleString(),  // human friendly for table
+    uhid: getUHID(mobile),
+    opd: getOPD(),
+    name: name,
+    mobile: mobile,
+    address: addressEl.value.trim() || '',
+    age: ageEl.value || '',
+    gender: genderEl.value || '',
+    dx: diagnosisEl.value.trim() || '',
+    chronic: getChronic(),
+    rx: rxList.join(' | '),   // keep existing format for compatibility
+    fu: followupEl.value || ''
   };
-  localStorage.setItem(AUTO_KEY, JSON.stringify(data));
+
+  const key = 'emr_v3';
+  const data = JSON.parse(localStorage.getItem(key) || '[]');
+  data.push(rec);
+  localStorage.setItem(key, JSON.stringify(data));
+
+  // Reset
+  patientNameEl.value = '';
+  mobileEl.value = '';
+  addressEl.value = '';
+  ageEl.value = '';
+  diagnosisEl.value = '';
+  followupEl.value = '';
+  document.querySelectorAll('.chronic').forEach(cb=>cb.checked=false);
+  rxList = []; renderRx();
+  loadRecords();
+  alert('Saved Successfully!');
 }
 
-(function restoreAutoSave(){
-  const saved = localStorage.getItem(AUTO_KEY);
-  if(!saved) return;
-  const data = JSON.parse(saved);
-  diagnosis.value = data.diagnosis || '';
-  notes.value = data.notes || '';
-  followup.value = data.followup || '';
-  meds = data.meds || [];
+/* ================== Load records ================== */
+/* Rewritten to create DOM elements and wire actions safely. Also supports legacy records where 'displayDate' may be missing. */
+function loadRecords(){
+  const q = (searchEl.value || '').trim().toLowerCase();
+  const raw = JSON.parse(localStorage.getItem('emr_v3') || '[]');
+  recordsTbody.innerHTML = '';
+
+  const order = raw.slice().reverse();
+  const limit = limitEl.value;
+  let shown = 0;
+  for (let i=0; i<order.length; i++){
+    const r = order[i];
+    const nameLower = (r.name || '').toLowerCase();
+    const mobileStr = (r.mobile || '');
+    if(q){
+      if(!nameLower.includes(q) && !mobileStr.includes(q)) continue;
+    } else {
+      if(limit !== 'all' && shown >= Number(limit)) break;
+    }
+    shown++;
+
+    const row = recordsTbody.insertRow();
+    // name cell
+    const cellName = row.insertCell();
+    cellName.innerHTML = `<div style="font-weight:bold">${escapeHtml(r.name||'')}</div>
+                          <div style="font-size:12px;color:#666">${escapeHtml(r.mobile || '')}</div>
+                          <div style="font-size:12px;color:#666">${escapeHtml(r.address||'')}</div>`;
+
+    // date cell
+    const dateDisplay = r.displayDate || (r.date ? new Date(r.date).toLocaleString() : (r.savedAtISO ? new Date(r.savedAtISO).toLocaleString() : ''));
+    const cellDate = row.insertCell();
+    cellDate.textContent = dateDisplay.split(',')[0];
+
+    // actions cell
+    const cellAction = row.insertCell();
+    const printBtn = document.createElement('button');
+    printBtn.className = 'action-btn';
+    printBtn.textContent = 'Print';
+    printBtn.onclick = ()=> printRecById(r.id, false);
+
+    const printHiBtn = document.createElement('button');
+    printHiBtn.className = 'action-btn';
+    printHiBtn.textContent = 'Print (Hi)';
+    printHiBtn.onclick = ()=> printRecById(r.id, true);
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'action-btn';
+    editBtn.textContent = 'Edit';
+    editBtn.onclick = ()=> editRecord(r.id);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'action-btn danger';
+    delBtn.textContent = 'Delete';
+    delBtn.onclick = ()=> deleteRecord(r.id);
+
+    [printBtn, printHiBtn, editBtn, delBtn].forEach(b=>{ b.style.marginRight='6px'; cellAction.appendChild(b); });
+  }
+}
+
+/* ================== Edit/Delete ================== */
+function editRecord(id){
+  const data = JSON.parse(localStorage.getItem('emr_v3') || '[]');
+  const r = data.find(x => x.id === id || (x.id && String(x.id) === String(id)));
+  if(!r) return alert('Record not found');
+  // populate form (note: this overwrites current rxList)
+  patientNameEl.value = r.name || '';
+  mobileEl.value = r.mobile || '';
+  addressEl.value = r.address || '';
+  ageEl.value = r.age || '';
+  genderEl.value = r.gender || 'Male';
+  diagnosisEl.value = r.dx || '';
+  followupEl.value = r.fu || '';
+  setChronic(r.chronic || []);
+  rxList = [];
+  if(r.rx){
+    // support both old and new separators
+    const parts = r.rx.split('|').map(p=>p.trim()).filter(Boolean);
+    parts.forEach(p => rxList.push(p));
+  }
   renderRx();
-})();
+  // remove the old record so Save creates a fresh one (simple edit flow)
+  if(confirm('Loaded record into form for editing. Save to update. Remove old record now?')){
+    const remaining = data.filter(x => x.id !== r.id);
+    localStorage.setItem('emr_v3', JSON.stringify(remaining));
+    loadRecords();
+  }
+}
 
-setInterval(autoSaveVisit, 3000);
+function deleteRecord(id){
+  if(!confirm('Delete this record permanently?')) return;
+  const data = JSON.parse(localStorage.getItem('emr_v3') || '[]');
+  const remaining = data.filter(x => x.id !== id && String(x.id) !== String(id));
+  localStorage.setItem('emr_v3', JSON.stringify(remaining));
+  loadRecords();
+}
 
-/* ---------- FINAL SAVE VISIT ---------- */
-function saveVisit(){
-  visits.push({
-    diagnosis: diagnosis.value,
-    notes: notes.value,
-    meds: meds,
-    followup: followup.value
+/* ================== Hindi Logic ================== */
+function translateDoseToHindi(text){
+  if(!text) return text;
+  const map = {
+    "before food": "खाने से पहले",
+    "after food": "खाने के बाद",
+    "with food": "खाने के साथ",
+    "empty stomach": "खाली पेट",
+    "daily": "रोजाना",
+    "days": "दिन",
+    "SOS": "दर्द होने पर",
+    "once daily": "दिन में एक बार",
+    "twice daily": "दिन में दो बार",
+    "thrice daily": "दिन में तीन बार",
+    "after dinner": "रात के खाने के बाद",
+    "before breakfast": "नाश्ते से पहले"
+  };
+  let out = text;
+  Object.keys(map).forEach(k=>{
+    out = out.replace(new RegExp(`\\b${escapeRegExp(k)}\\b`,'gi'), map[k]);
   });
-  localStorage.removeItem(AUTO_KEY);
-  meds=[];
-  renderRx();
-  diagnosis.value='';notes.value='';followup.value='';
-  alert("Visit saved successfully");
+  return out;
 }
-</script>
 
+/* ================== Print by id (robust) ================== */
+/* This function builds the prescription HTML with better parsing:
+   - Shows mobile and address on print
+   - Parses Rx lines robustly (support en dash, hyphen, em-dash)
+   - Optionally shows Hindi translation below the dose
+*/
+function printRecById(id, translateToHindi){
+  const data = JSON.parse(localStorage.getItem('emr_v3') || '[]');
+  const r = data.find(x => x.id === id || String(x.id) === String(id));
+  if(!r) return alert('Record not found');
+
+  const qrData = encodeURIComponent(`UHID:${r.uhid}|Name:${r.name}|Mobile:${r.mobile}`);
+  let fuText = r.fu ? new Date(r.fu).toDateString() : '____________';
+
+  // Prepare Rx HTML robustly
+  const rxArray = (r.rx ? r.rx.split('|').map(s=>s.trim()).filter(Boolean) : []);
+  const rxHTML = rxArray.map((entry, j)=>{
+    // Split drug and dose by common separators (en dash, em dash, hyphen)
+    const parts = entry.split(/–|—|-|—|−/).map(p=>p.trim()).filter(Boolean);
+    let drug = parts[0] || entry;
+    let dosePart = parts.slice(1).join(' - ') || '';
+    // If no dash found, try to separate by first occurrence of digits (rare)
+    if(!dosePart && /\d/.test(entry)){
+      const idx = entry.search(/\d/);
+      drug = entry.slice(0, idx).trim();
+      dosePart = entry.slice(idx).trim();
+    }
+    const hindi = translateToHindi && dosePart ? translateDoseToHindi(dosePart) : '';
+    return `<div style="margin-bottom:8px;">
+              <strong>${j+1}. ${escapeHtml(drug)}</strong><br>
+              <span style="font-size:13px; margin-left:15px">➤ ${escapeHtml(dosePart)}</span>
+              ${hindi ? `<div style="font-size:13px;color:#444;margin-left:15px">(${escapeHtml(hindi)})</div>` : ''}
+            </div>`;
+  }).join('');
+
+  const html = `
+  <!doctype html>
+  <html>
+  <head>
+    <title>Prescription - ${escapeHtml(r.name||'')}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      @page { size: A4; margin: 10mm; }
+      body{font-family: Arial, sans-serif; font-size:12px; margin:0;}
+      table{width:100%; border-collapse:collapse; margin-bottom:5px}
+      td{border:1px solid #000; padding:5px; vertical-align:top}
+      .noborder td{border:none}
+      .center{text-align:center}
+      .header{color:#083d77; font-weight:bold; font-size:18px}
+      .box{height:40mm} .bigbox{height:120mm}
+      .rx{font-size:14px}
+      .footer{position:fixed; bottom:10mm; left:10mm; right:10mm; font-size:12px; border-top:1px dotted #000; padding-top:6px;}
+    </style>
+  </head>
+  <body>
+    <table class="noborder">
+      <tr>
+        <td style="width:15%"><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${qrData}" width="80" /></td>
+        <td class="center">
+          <div class="header">SHREE RAM CLINIC</div>
+          <div>ADDRESS – BIRRA, CHAMPA</div>
+          <div><strong>Dr. Ashwini Srivastav (MBBS)</strong></div>
+          <div>Department of General Medicine</div>
+        </td>
+        <td style="width:15%" class="center">
+          <img src="https://barcode.tec-it.com/barcode.ashx?data=${encodeURIComponent(r.uhid)}&code=Code128" width="100"/>
+          <div>${escapeHtml(r.uhid || '')}</div>
+        </td>
+      </tr>
+    </table>
+
+    <table>
+      <tr>
+        <td><strong>Name:</strong> ${escapeHtml(r.name||'')}</td>
+        <td><strong>Age/Sex:</strong> ${escapeHtml(r.age||'')} / ${escapeHtml(r.gender||'')}</td>
+        <td><strong>Date:</strong> ${escapeHtml(r.displayDate || (r.savedAtISO ? new Date(r.savedAtISO).toLocaleString() : ''))}</td>
+      </tr>
+      <tr>
+        <td colspan="3"><strong>Mobile:</strong> ${escapeHtml(r.mobile||'')} &nbsp;&nbsp; <strong>Address:</strong> ${escapeHtml(r.address||'')}</td>
+      </tr>
+      <tr>
+        <td colspan="3"><strong>Diagnosis:</strong> ${escapeHtml(r.dx||'')}</td>
+      </tr>
+    </table>
+
+    <table>
+      <tr class="center">
+        <td class="box">BP / Vitals</td>
+        <td class="box">SpO2 / Wt</td>
+        <td class="box">Lab / Inv</td>
+        <td class="box">History<br>${escapeHtml((r.chronic||[]).join(', '))}</td>
+      </tr>
+    </table>
+
+    <table>
+      <tr>
+        <td style="width:30%" class="bigbox"><strong>Notes</strong></td>
+        <td style="width:70%" class="bigbox">
+          <div style="font-size:16px; font-weight:bold; margin-bottom:10px">Rx</div>
+          <div class="rx">
+            ${rxHTML || '<div style="color:#666">No medicines prescribed</div>'}
+          </div>
+          <div class="footer">
+             <strong>Follow Up:</strong> ${escapeHtml(fuText)}
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>`;
+
+  // open print window and trigger print after load
+  const w = window.open('','_blank');
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  // ensure the print waits until content (images) are loaded
+  const tryPrint = () => {
+    try {
+      // older browsers: wait small timeout
+      setTimeout(()=> w.print(), 600);
+    } catch(e){
+      setTimeout(()=> w.print(), 800);
+    }
+  };
+  // give some time for resources
+  setTimeout(tryPrint, 700);
+}
+
+/* ================== Export CSV & backup other data ================== */
+function exportCSV(){
+  const data = JSON.parse(localStorage.getItem('emr_v3') || '[]');
+  // include additional metadata for safe restore
+  let csv = 'Name,Mobile,Date,Address,Age,Gender,Diagnosis,Chronic,Rx,FollowUp,Uhid,Id,SavedISO\n';
+  data.forEach(r=> {
+    csv += `"${(r.name||'').replace(/"/g,'""')}","${(r.mobile||'').replace(/"/g,'""')}","${(r.displayDate||'').replace(/"/g,'""')}","${(r.address||'').replace(/"/g,'""')}","${(r.age||'').replace(/"/g,'""')}","${(r.gender||'').replace(/"/g,'""')}","${(r.dx||'').replace(/"/g,'""')}","${(r.chronic||[]).join(';').replace(/"/g,'""')}","${(r.rx||'').replace(/"/g,'""')}","${(r.fu||'').replace(/"/g,'""')}","${(r.uhid||'').replace(/"/g,'""')}","${(r.id||'').replace(/"/g,'""')}","${(r.savedAtISO||'').replace(/"/g,'""')}"\n`;
+  });
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'emr_backup.csv';
+  a.click();
+}
+
+/* ================== Utilities ================== */
+function escapeHtml(str){
+  if(!str && str !== '') return '';
+  return String(str).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
+}
+function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+/* ================== Initial load ================== */
+loadRecords();
+renderRx();
+
+</script>
 </body>
 </html>
