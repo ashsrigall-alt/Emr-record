@@ -2,13 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>SHREE RAM CLINIC – EMR (FINAL)</title>
+<title>SHREE RAM CLINIC – EMR (Final Offline)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <style>
 :root{--brand:#083d77;--muted:#f0f3f6}
@@ -27,22 +22,10 @@ table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #bbb;padding:6px;font-size:13px}
 th{background:#eef3f7}
 .muted{font-size:12px;color:#555}
-#loginBox{max-width:320px;margin:120px auto;background:#fff;padding:20px;border-radius:8px}
-.hidden{display:none}
 </style>
 </head>
 
 <body>
-
-<!-- LOGIN -->
-<div id="loginBox">
-  <h3>Clinic Login</h3>
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-</div>
-
-<div id="app" class="hidden">
 
 <header>
   <div style="font-size:18px;font-weight:700">SHREE RAM CLINIC</div>
@@ -72,8 +55,8 @@ th{background:#eef3f7}
 <label>Drug</label>
 <input id="drug">
 
-<label>Dose</label>
-<input id="dose">
+<label>Dose / Instructions</label>
+<input id="dose" placeholder="after food / before food">
 
 <div class="flex">
   <button class="secondary" onclick="setPattern('1-0-1')">1-0-1</button>
@@ -102,40 +85,33 @@ th{background:#eef3f7}
 </div>
 
 </div>
-</div>
 
 <script>
-/* 🔴 PASTE YOUR REAL FIREBASE CONFIG HERE */
-const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-/* LOGIN */
-function login(){
-  firebase.auth().signInWithEmailAndPassword(email.value,password.value)
-    .then(()=>{
-      loginBox.classList.add("hidden");
-      app.classList.remove("hidden");
-      loadRecords();
-    })
-    .catch(e=>alert(e.message));
-}
-
-/* EMR LOGIC */
+const $=id=>document.getElementById(id);
 let rx=[];
 
+/* -------- Hindi Translation -------- */
+function toHindi(t){
+  if(!t) return t;
+  return t
+    .replace(/1-0-1/g,'सुबह-शाम')
+    .replace(/1-1-1/g,'सुबह-दोपहर-शाम')
+    .replace(/1-0-0/g,'केवल सुबह')
+    .replace(/0-0-1/g,'केवल रात')
+    .replace(/after food/gi,'भोजन के बाद')
+    .replace(/before food/gi,'भोजन से पहले');
+}
+
+/* -------- Rx Logic -------- */
 function setPattern(p){
-  dose.value = (dose.value + " " + p).trim();
+  dose.value=(dose.value+' '+p).trim();
 }
 
 function addMedicine(){
-  if(!drug.value||!dose.value)return alert("Enter drug & dose");
+  if(!drug.value||!dose.value){
+    alert("Enter drug and dose");
+    return;
+  }
   rx.push(`${drug.value}|${dose.value}|${duration.value||'NA'}`);
   drug.value='';dose.value='';duration.value='';
   renderRx();
@@ -151,12 +127,12 @@ function renderRx(){
   });
 }
 
-function getUHID(m){
-  return "UH"+m.slice(-6);
-}
+/* -------- Storage -------- */
+function getUHID(m){ return "UH"+m.slice(-6); }
 
 function saveRecord(){
-  const record={
+  const data=JSON.parse(localStorage.getItem("emr")||"[]");
+  data.push({
     uhid:getUHID(mobile.value),
     date:new Date().toLocaleString(),
     name:name.value,
@@ -164,51 +140,48 @@ function saveRecord(){
     dx:diagnosis.value,
     rx:rx,
     fu:followup.value
-  };
-  db.ref("records").push(record);
-  rx=[];renderRx();alert("Saved");
+  });
+  localStorage.setItem("emr",JSON.stringify(data));
+  rx=[];renderRx();loadRecords();
+  alert("Saved");
 }
 
 function loadRecords(){
-  db.ref("records").on("value",snap=>{
-    records.innerHTML='';
-    const data=snap.val();
-    if(!data)return;
-    Object.values(data).forEach(r=>{
-      let tr=records.insertRow();
-      tr.innerHTML=`
-        <td>${r.uhid}</td>
-        <td>${r.date}</td>
-        <td>${r.name}</td>
-        <td>${r.dx}</td>
-        <td><button onclick='printRec(${JSON.stringify(r)})'>Print</button></td>
-      `;
-    });
+  const data=JSON.parse(localStorage.getItem("emr")||"[]");
+  records.innerHTML='';
+  data.forEach(r=>{
+    const tr=records.insertRow();
+    tr.innerHTML=`
+      <td>${r.uhid}</td>
+      <td>${r.date}</td>
+      <td>${r.name}</td>
+      <td>${r.dx}</td>
+      <td><button onclick='printRec(${JSON.stringify(r)})'>Print</button></td>`;
   });
 }
 
-/* ---------- FINAL A4 PRINT ---------- */
+/* -------- FINAL A4 PRESCRIPTION PRINT -------- */
 function printRec(r){
 
-  const rxHTML = r.rx.map((x,i)=>{
-    const p = x.split('|');
+  const rxHTML=r.rx.map((x,i)=>{
+    const p=x.split('|');
     return `
       <tr>
         <td style="width:5%">${i+1}.</td>
         <td>
           <b>${p[0]}</b><br>
-          Dose: ${p[1]}<br>
+          Dose: ${toHindi(p[1])}<br>
           Duration: ${p[2]}
         </td>
       </tr>`;
   }).join('');
 
-  const rxQR = r.rx.map((x,i)=>{
+  const rxQR=r.rx.map((x,i)=>{
     const p=x.split('|');
     return `${i+1}. ${p[0]} – ${p[1]} (${p[2]})`;
   }).join('\n');
 
-  const qrData = encodeURIComponent(
+  const qrData=encodeURIComponent(
 `UHID: ${r.uhid}
 Name: ${r.name}
 Diagnosis: ${r.dx}
@@ -216,10 +189,10 @@ Diagnosis: ${r.dx}
 Treatment:
 ${rxQR}
 
-Follow-up: ${r.fu || '-'}`
+Follow-up: ${r.fu||'-'}`
   );
 
-  const html = `
+  const html=`
 <!DOCTYPE html>
 <html>
 <head>
@@ -259,20 +232,24 @@ td{padding:4px;vertical-align:top}
 
 <div class="line"></div>
 
-<b>Follow-up:</b> ${r.fu || '-'}
+<b>Follow-up:</b> ${r.fu||'-'}
 
 <div class="footer">
-Dr. Ashwini Srivastav
+Dr. Ashwini Srivastav, MBBS<br>
+<span style="font-weight:normal">Reg. No.: 101085 / WBMC</span>
 </div>
 
 </body>
 </html>`;
 
-  const w = window.open('', '_blank');
+  const w=window.open('', '_blank');
   w.document.write(html);
   w.document.close();
   setTimeout(()=>w.print(),600);
 }
+
+loadRecords();
 </script>
+
 </body>
 </html>
