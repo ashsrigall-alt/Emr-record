@@ -1,254 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>SHREE RAM CLINIC – EMR (Final Offline)</title>
+<meta charset="UTF-8">
+<title>SHREE RAM CLINIC – OPD EMR</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-:root{--brand:#083d77;--muted:#f0f3f6}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--muted)}
-header{background:var(--brand);color:#fff;padding:14px;text-align:center}
-.container{max-width:1100px;margin:14px auto;padding:12px}
-.card{background:#fff;border-radius:8px;padding:14px;margin-bottom:14px}
-label{font-weight:700;margin-top:8px;display:block}
-input{width:100%;padding:8px;margin-top:4px}
-.flex{display:flex;gap:10px;flex-wrap:wrap}
-.flex>div{flex:1;min-width:150px}
-button{background:var(--brand);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
-button.secondary{background:#555}
-ul{padding-left:18px}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #bbb;padding:6px;font-size:13px}
-th{background:#eef3f7}
-.muted{font-size:12px;color:#555}
+body{font-family:Arial;font-size:13px}
+table{border-collapse:collapse;width:100%}
+td,th{border:1px solid #000;padding:4px;vertical-align:top}
+.header{text-align:center;font-weight:700;font-size:16px}
+.sub{text-align:center;font-size:12px}
+.no-border td{border:none}
+.visit-box{height:40px}
+textarea{width:100%;height:100px}
+input{width:100%}
+button{margin:2px}
+@page{size:A4;margin:10mm}
 </style>
 </head>
 
 <body>
 
-<header>
-  <div style="font-size:18px;font-weight:700">SHREE RAM CLINIC</div>
-  <div style="font-size:13px">ADDRESS – BIRRA, CHAMPA · General Medicine</div>
-</header>
+<!-- ================= HEADER ================= -->
+<table class="no-border">
+<tr>
+<td style="width:20%">
+<img id="qrImg" width="90">
+</td>
+<td style="width:60%" class="header">
+SHREE RAM CLINIC<br>
+<span class="sub">ADDRESS – BIRRA, CHAMPA</span><br>
+<span class="sub">Department of General Medicine</span>
+</td>
+<td style="width:20%;text-align:right">
+<img id="barImg" width="140">
+</td>
+</tr>
+</table>
 
-<div class="container">
+<!-- ================= PATIENT DETAILS ================= -->
+<table>
+<tr>
+<td>Name: <span id="pname">Ashwin</span></td>
+<td>Age: <span id="page">56</span></td>
+<td>Gender: <span id="pgender">Male</span></td>
+</tr>
+<tr>
+<td>Mobile: <span id="pmobile">7908501713</span></td>
+<td>UHID: <span id="puhid">UH100000</span></td>
+<td>OPD No: <span id="opdno">2</span></td>
+</tr>
+<tr>
+<td colspan="2">Date: <span id="pdate">31/12/2025</span></td>
+<td>Doctor: Dr. Ashwini Srivastav</td>
+</tr>
+</table>
 
-<div class="card">
-<h3>Add Patient Visit</h3>
+<!-- ================= VISITS ================= -->
+<table>
+<tr>
+<th>Visit 1</th>
+<th>Visit 2</th>
+<th>Visit 3</th>
+<th>Visit 4</th>
+</tr>
+<tr>
+<td class="visit-box"></td>
+<td class="visit-box"></td>
+<td class="visit-box"></td>
+<td class="visit-box"></td>
+</tr>
+</table>
 
-<div class="flex">
-  <div><label>Name</label><input id="name"></div>
-  <div><label>Mobile</label><input id="mobile"></div>
-</div>
+<!-- ================= NOTES / RX ================= -->
+<table>
+<tr>
+<th style="width:50%">Clinical Notes</th>
+<th style="width:50%">Advice / Treatment</th>
+</tr>
+<tr>
+<td>
+<textarea id="notes"></textarea>
+</td>
+<td>
+Diagnosis:
+<input id="diagnosis"><br><br>
 
-<label>Diagnosis</label>
-<input id="diagnosis">
+Medicine:
+<input id="drug"><br>
+Dose:
+<input id="dose"><br>
 
-<label>Follow-up Date</label>
-<input id="followup" type="date">
+<button onclick="addDose('1-0-1')">1-0-1</button>
+<button onclick="addDose('1-1-1')">1-1-1</button>
+<button onclick="addDose('1-0-0')">1-0-0</button>
+<button onclick="addDose('0-0-1')">0-0-1</button>
+<br><br>
 
-<hr>
+Duration:
+<input id="duration"><br><br>
 
-<h4>Add Medicine</h4>
-
-<label>Drug</label>
-<input id="drug">
-
-<label>Dose / Instructions</label>
-<input id="dose" placeholder="after food / before food">
-
-<div class="flex">
-  <button class="secondary" onclick="setPattern('1-0-1')">1-0-1</button>
-  <button class="secondary" onclick="setPattern('1-1-1')">1-1-1</button>
-  <button class="secondary" onclick="setPattern('1-0-0')">1-0-0</button>
-  <button class="secondary" onclick="setPattern('0-0-1')">0-0-1</button>
-</div>
-
-<label>Duration</label>
-<input id="duration" placeholder="5 days / 2 weeks">
-
-<button onclick="addMedicine()">Add Medicine</button>
+<button onclick="addMed()">Add</button>
 <ul id="rxList"></ul>
 
-<button onclick="saveRecord()">Save Visit</button>
-</div>
+Follow-up:
+<input id="followup" type="date"><br><br>
 
-<div class="card">
-<h3>Patient Records</h3>
-<table>
-<thead>
-<tr><th>UHID</th><th>Date</th><th>Name</th><th>Diagnosis</th><th>Print</th></tr>
-</thead>
-<tbody id="records"></tbody>
+<button onclick="saveVisit()">FINAL SAVE VISIT</button>
+</td>
+</tr>
 </table>
-</div>
 
-</div>
+<p style="text-align:center;font-size:11px">
+Please retain this card for future visits. UHID: <span id="footuhid">UH100000</span>
+</p>
+
+<p style="text-align:right">
+Dr. Ashwini Srivastav, MBBS<br>
+Reg. No.: 101085 / WBMC
+</p>
 
 <script>
-const $=id=>document.getElementById(id);
-let rx=[];
+let visits = [];
+let meds = [];
+let PRINT_LANG = 'hi';
+const AUTO_KEY = "emr_autosave_visit";
 
-/* -------- Hindi Translation -------- */
-function toHindi(t){
-  if(!t) return t;
-  return t
-    .replace(/1-0-1/g,'सुबह-शाम')
-    .replace(/1-1-1/g,'सुबह-दोपहर-शाम')
-    .replace(/1-0-0/g,'केवल सुबह')
-    .replace(/0-0-1/g,'केवल रात')
-    .replace(/after food/gi,'भोजन के बाद')
-    .replace(/before food/gi,'भोजन से पहले');
+/* ---------- Dose helpers ---------- */
+function addDose(d){
+  dose.value = (dose.value + ' ' + d).trim();
 }
 
-/* -------- Rx Logic -------- */
-function setPattern(p){
-  dose.value=(dose.value+' '+p).trim();
+function doseHindi(d){
+  return d
+   .replace(/1-0-1/g,'सुबह-शाम')
+   .replace(/1-1-1/g,'सुबह-दोपहर-शाम')
+   .replace(/1-0-0/g,'केवल सुबह')
+   .replace(/0-0-1/g,'केवल रात')
+   .replace(/after food/gi,'भोजन के बाद')
+   .replace(/before food/gi,'भोजन से पहले');
 }
 
-function addMedicine(){
-  if(!drug.value||!dose.value){
-    alert("Enter drug and dose");
-    return;
-  }
-  rx.push(`${drug.value}|${dose.value}|${duration.value||'NA'}`);
+/* ---------- Medicines ---------- */
+function addMed(){
+  if(!drug.value || !dose.value) return;
+  meds.push({
+    drug: drug.value,
+    dose: dose.value,
+    duration: duration.value
+  });
   drug.value='';dose.value='';duration.value='';
   renderRx();
 }
 
 function renderRx(){
   rxList.innerHTML='';
-  rx.forEach(x=>{
-    const p=x.split('|');
-    const li=document.createElement('li');
-    li.innerHTML=`<b>${p[0]}</b> – ${p[1]} <span class="muted">(${p[2]})</span>`;
+  meds.forEach(m=>{
+    let li=document.createElement('li');
+    li.innerHTML=`${m.drug} – ${m.dose} (${m.duration})`;
     rxList.appendChild(li);
   });
 }
 
-/* -------- Storage -------- */
-function getUHID(m){ return "UH"+m.slice(-6); }
+/* ---------- AUTO SAVE ---------- */
+function autoSaveVisit(){
+  const data = {
+    diagnosis: diagnosis.value,
+    notes: notes.value,
+    meds: meds,
+    followup: followup.value
+  };
+  localStorage.setItem(AUTO_KEY, JSON.stringify(data));
+}
 
-function saveRecord(){
-  const data=JSON.parse(localStorage.getItem("emr")||"[]");
-  data.push({
-    uhid:getUHID(mobile.value),
-    date:new Date().toLocaleString(),
-    name:name.value,
-    mobile:mobile.value,
-    dx:diagnosis.value,
-    rx:rx,
-    fu:followup.value
+(function restoreAutoSave(){
+  const saved = localStorage.getItem(AUTO_KEY);
+  if(!saved) return;
+  const data = JSON.parse(saved);
+  diagnosis.value = data.diagnosis || '';
+  notes.value = data.notes || '';
+  followup.value = data.followup || '';
+  meds = data.meds || [];
+  renderRx();
+})();
+
+setInterval(autoSaveVisit, 3000);
+
+/* ---------- FINAL SAVE VISIT ---------- */
+function saveVisit(){
+  visits.push({
+    diagnosis: diagnosis.value,
+    notes: notes.value,
+    meds: meds,
+    followup: followup.value
   });
-  localStorage.setItem("emr",JSON.stringify(data));
-  rx=[];renderRx();loadRecords();
-  alert("Saved");
+  localStorage.removeItem(AUTO_KEY);
+  meds=[];
+  renderRx();
+  diagnosis.value='';notes.value='';followup.value='';
+  alert("Visit saved successfully");
 }
-
-function loadRecords(){
-  const data=JSON.parse(localStorage.getItem("emr")||"[]");
-  records.innerHTML='';
-  data.forEach(r=>{
-    const tr=records.insertRow();
-    tr.innerHTML=`
-      <td>${r.uhid}</td>
-      <td>${r.date}</td>
-      <td>${r.name}</td>
-      <td>${r.dx}</td>
-      <td><button onclick='printRec(${JSON.stringify(r)})'>Print</button></td>`;
-  });
-}
-
-/* -------- FINAL A4 PRESCRIPTION PRINT -------- */
-function printRec(r){
-
-  const rxHTML=r.rx.map((x,i)=>{
-    const p=x.split('|');
-    return `
-      <tr>
-        <td style="width:5%">${i+1}.</td>
-        <td>
-          <b>${p[0]}</b><br>
-          Dose: ${toHindi(p[1])}<br>
-          Duration: ${p[2]}
-        </td>
-      </tr>`;
-  }).join('');
-
-  const rxQR=r.rx.map((x,i)=>{
-    const p=x.split('|');
-    return `${i+1}. ${p[0]} – ${p[1]} (${p[2]})`;
-  }).join('\n');
-
-  const qrData=encodeURIComponent(
-`UHID: ${r.uhid}
-Name: ${r.name}
-Diagnosis: ${r.dx}
-
-Treatment:
-${rxQR}
-
-Follow-up: ${r.fu||'-'}`
-  );
-
-  const html=`
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-@page{size:A4;margin:15mm}
-body{font-family:Arial;font-size:13px}
-.header{text-align:center;font-weight:700;font-size:17px}
-.sub{text-align:center;font-size:12px}
-.line{border-top:1px solid #000;margin:10px 0}
-table{width:100%;border-collapse:collapse}
-td{padding:4px;vertical-align:top}
-.footer{text-align:right;margin-top:30px;font-weight:700}
-</style>
-</head>
-<body>
-
-<div class="header">SHREE RAM CLINIC</div>
-<div class="sub">ADDRESS – BIRRA, CHAMPA<br>General Medicine</div>
-
-<table>
-<tr>
-<td>
-<b>Name:</b> ${r.name}<br>
-<b>Diagnosis:</b> ${r.dx}
-</td>
-<td style="text-align:right">
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qrData}">
-</td>
-</tr>
-</table>
-
-<div class="line"></div>
-
-<b>Rx</b>
-<table>${rxHTML}</table>
-
-<div class="line"></div>
-
-<b>Follow-up:</b> ${r.fu||'-'}
-
-<div class="footer">
-Dr. Ashwini Srivastav, MBBS<br>
-<span style="font-weight:normal">Reg. No.: 101085 / WBMC</span>
-</div>
-
-</body>
-</html>`;
-
-  const w=window.open('', '_blank');
-  w.document.write(html);
-  w.document.close();
-  setTimeout(()=>w.print(),600);
-}
-
-loadRecords();
 </script>
 
 </body>
