@@ -5,14 +5,19 @@
 <title>SHREE RAM CLINIC – EMR (FINAL)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
 <style>
 :root{--brand:#083d77;--muted:#f0f3f6}
 body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--muted)}
 header{background:var(--brand);color:#fff;padding:14px;text-align:center}
 .container{max-width:1100px;margin:14px auto;padding:12px}
-.card{background:#fff;border-radius:8px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card{background:#fff;border-radius:8px;padding:14px;margin-bottom:14px}
 label{font-weight:700;margin-top:8px;display:block}
-input,select{width:100%;padding:8px;margin-top:4px;border:1px solid #ccc;border-radius:4px}
+input{width:100%;padding:8px;margin-top:4px}
 .flex{display:flex;gap:10px;flex-wrap:wrap}
 .flex>div{flex:1;min-width:150px}
 button{background:var(--brand);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
@@ -21,13 +26,24 @@ ul{padding-left:18px}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #bbb;padding:6px;font-size:13px}
 th{background:#eef3f7}
-.no-print{margin-bottom:10px}
-@media print{.no-print{display:none}}
 .muted{font-size:12px;color:#555}
+#loginBox{max-width:320px;margin:120px auto;background:#fff;padding:20px;border-radius:8px}
+.hidden{display:none}
 </style>
 </head>
 
 <body>
+
+<!-- LOGIN -->
+<div id="loginBox">
+  <h3>Clinic Login</h3>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="app" class="hidden">
+
 <header>
   <div style="font-size:18px;font-weight:700">SHREE RAM CLINIC</div>
   <div style="font-size:13px">ADDRESS – BIRRA, CHAMPA · General Medicine</div>
@@ -35,7 +51,6 @@ th{background:#eef3f7}
 
 <div class="container">
 
-<!-- ================= ADD VISIT ================= -->
 <div class="card">
 <h3>Add Patient Visit</h3>
 
@@ -44,18 +59,8 @@ th{background:#eef3f7}
   <div><label>Mobile</label><input id="mobile"></div>
 </div>
 
-<label>Address</label>
-<input id="address">
-
-<div class="flex">
-  <div><label>Age</label><input id="age" type="number"></div>
-  <div><label>Gender</label>
-    <select id="gender"><option>Male</option><option>Female</option></select>
-  </div>
-</div>
-
 <label>Diagnosis</label>
-<input id="diagnosis" placeholder="Primary / provisional diagnosis">
+<input id="diagnosis">
 
 <label>Follow-up Date</label>
 <input id="followup" type="date">
@@ -64,13 +69,11 @@ th{background:#eef3f7}
 
 <h4>Add Medicine</h4>
 
-<div class="flex">
-  <div><label>Medicine</label><select id="medicine"></select></div>
-  <div><label>Custom Drug</label><input id="customDrug"></div>
-</div>
+<label>Drug</label>
+<input id="drug">
 
-<label>Dose / Instructions</label>
-<input id="dose" placeholder="after food / before food">
+<label>Dose</label>
+<input id="dose">
 
 <div class="flex">
   <button class="secondary" onclick="setPattern('1-0-1')">1-0-1</button>
@@ -82,160 +85,194 @@ th{background:#eef3f7}
 <label>Duration</label>
 <input id="duration" placeholder="5 days / 2 weeks">
 
-<div class="flex">
-  <select id="preset">
-    <option value="">Preset</option>
-    <option>OD</option><option>BD</option><option>TDS</option>
-    <option>HS</option><option>SOS</option>
-  </select>
-  <button class="secondary" onclick="applyPreset()">Apply</button>
-</div>
-
 <button onclick="addMedicine()">Add Medicine</button>
 <ul id="rxList"></ul>
 
 <button onclick="saveRecord()">Save Visit</button>
-<button class="secondary" onclick="exportCSV()">Export CSV</button>
 </div>
 
-<!-- ================= RECORDS ================= -->
 <div class="card">
 <h3>Patient Records</h3>
-<div class="no-print">
-  <button class="secondary" onclick="setLang('en')">English</button>
-  <button class="secondary" onclick="setLang('hi')">हिंदी</button>
-</div>
-
 <table>
 <thead>
-<tr><th>UHID</th><th>OPD</th><th>Date</th><th>Name</th><th>Diagnosis</th><th>Print</th></tr>
+<tr><th>UHID</th><th>Date</th><th>Name</th><th>Diagnosis</th><th>Print</th></tr>
 </thead>
 <tbody id="records"></tbody>
 </table>
 </div>
 
 </div>
+</div>
 
 <script>
-const $=id=>document.getElementById(id);
-let PRINT_LANG='en';
+/* 🔴 PASTE YOUR REAL FIREBASE CONFIG HERE */
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* LOGIN */
+function login(){
+  firebase.auth().signInWithEmailAndPassword(email.value,password.value)
+    .then(()=>{
+      loginBox.classList.add("hidden");
+      app.classList.remove("hidden");
+      loadRecords();
+    })
+    .catch(e=>alert(e.message));
+}
+
+/* EMR LOGIC */
 let rx=[];
 
-const meds=["Paracetamol","Pantoprazole","Amoxiclav","Azithromycin","Amlodipine","Metformin"];
-
-function setLang(l){PRINT_LANG=l;alert("Print language set");}
-
-function loadMeds(){
-  meds.forEach(m=>{let o=document.createElement('option');o.textContent=m;$('medicine').appendChild(o);});
+function setPattern(p){
+  dose.value = (dose.value + " " + p).trim();
 }
-loadMeds();
-
-function setPattern(p){$('dose').value=($('dose').value+' '+p).trim();}
-function applyPreset(){if($('preset').value)$('dose').value+=' '+$('preset').value;}
 
 function addMedicine(){
-  const drug=$('customDrug').value||$('medicine').value;
-  const dose=$('dose').value;
-  const dur=$('duration').value||'NA';
-  if(!drug||!dose)return alert("Enter drug & dose");
-  rx.push(`${drug}|${dose}|${dur}`);
-  $('dose').value='';$('duration').value='';$('customDrug').value='';
+  if(!drug.value||!dose.value)return alert("Enter drug & dose");
+  rx.push(`${drug.value}|${dose.value}|${duration.value||'NA'}`);
+  drug.value='';dose.value='';duration.value='';
   renderRx();
 }
 
 function renderRx(){
-  $('rxList').innerHTML='';
+  rxList.innerHTML='';
   rx.forEach(x=>{
     const p=x.split('|');
     const li=document.createElement('li');
     li.innerHTML=`<b>${p[0]}</b> – ${p[1]} <span class="muted">(${p[2]})</span>`;
-    $('rxList').appendChild(li);
+    rxList.appendChild(li);
   });
 }
 
 function getUHID(m){
-  let map=JSON.parse(localStorage.getItem('uhid')||'{}');
-  if(!map[m]){map[m]='UH'+(1000+Object.keys(map).length);localStorage.setItem('uhid',JSON.stringify(map));}
-  return map[m];
+  return "UH"+m.slice(-6);
 }
 
 function saveRecord(){
-  const data=JSON.parse(localStorage.getItem('emr')||'[]');
-  data.push({
-    uhid:getUHID($('mobile').value),
-    opd:data.length+1,
+  const record={
+    uhid:getUHID(mobile.value),
     date:new Date().toLocaleString(),
-    name:$('name').value,
-    mobile:$('mobile').value,
-    dx:$('diagnosis').value,
-    rx:rx.join('||'),
-    fu:$('followup').value
-  });
-  localStorage.setItem('emr',JSON.stringify(data));
-  rx=[];renderRx();loadRecords();alert("Saved");
-}
-
-function translateHi(t){
-  return t.replace("1-0-1","सुबह-शाम").replace("1-1-1","सुबह-दोपहर-शाम")
-          .replace("after food","भोजन के बाद").replace("before food","भोजन से पहले");
+    name:name.value,
+    mobile:mobile.value,
+    dx:diagnosis.value,
+    rx:rx,
+    fu:followup.value
+  };
+  db.ref("records").push(record);
+  rx=[];renderRx();alert("Saved");
 }
 
 function loadRecords(){
-  const data=JSON.parse(localStorage.getItem('emr')||'[]');
-  $('records').innerHTML='';
-  data.forEach((r,i)=>{
-    let tr=$('records').insertRow();
-    tr.innerHTML=`<td>${r.uhid}</td><td>${r.opd}</td><td>${r.date}</td>
-    <td>${r.name}</td><td>${r.dx}</td>
-    <td><button onclick="printRec(${i})">Print</button></td>`;
+  db.ref("records").on("value",snap=>{
+    records.innerHTML='';
+    const data=snap.val();
+    if(!data)return;
+    Object.values(data).forEach(r=>{
+      let tr=records.insertRow();
+      tr.innerHTML=`
+        <td>${r.uhid}</td>
+        <td>${r.date}</td>
+        <td>${r.name}</td>
+        <td>${r.dx}</td>
+        <td><button onclick='printRec(${JSON.stringify(r)})'>Print</button></td>
+      `;
+    });
   });
 }
 
-function printRec(i){
-  const r=JSON.parse(localStorage.getItem('emr'))[i];
+/* ---------- FINAL A4 PRINT ---------- */
+function printRec(r){
 
-  const rxText=r.rx.split('||').map((x,j)=>{
+  const rxHTML = r.rx.map((x,i)=>{
+    const p = x.split('|');
+    return `
+      <tr>
+        <td style="width:5%">${i+1}.</td>
+        <td>
+          <b>${p[0]}</b><br>
+          Dose: ${p[1]}<br>
+          Duration: ${p[2]}
+        </td>
+      </tr>`;
+  }).join('');
+
+  const rxQR = r.rx.map((x,i)=>{
     const p=x.split('|');
-    return `${j+1}. ${p[0]} – ${p[1]} (${p[2]})`;
+    return `${i+1}. ${p[0]} – ${p[1]} (${p[2]})`;
   }).join('\n');
 
-  const qrData=encodeURIComponent(
+  const qrData = encodeURIComponent(
 `UHID: ${r.uhid}
 Name: ${r.name}
-Mobile: ${r.mobile}
-Date: ${r.date}
-
-Diagnosis:
-${r.dx}
+Diagnosis: ${r.dx}
 
 Treatment:
-${rxText}
+${rxQR}
 
-Follow-up:
-${r.fu||'Not specified'}`
+Follow-up: ${r.fu || '-'}`
   );
 
-  const rxHtml=r.rx.split('||').map((x,j)=>{
-    const p=x.split('|');
-    let d=PRINT_LANG==='hi'?translateHi(p[1]):p[1];
-    return `${j+1}. <b>${p[0]}</b><br>
-            <span class="muted">Dose: ${d}</span><br>
-            <span class="muted">Duration: ${p[2]}</span>`;
-  }).join('<br><br>');
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@page{size:A4;margin:15mm}
+body{font-family:Arial;font-size:13px}
+.header{text-align:center;font-weight:700;font-size:17px}
+.sub{text-align:center;font-size:12px}
+.line{border-top:1px solid #000;margin:10px 0}
+table{width:100%;border-collapse:collapse}
+td{padding:4px;vertical-align:top}
+.footer{text-align:right;margin-top:30px;font-weight:700}
+</style>
+</head>
+<body>
 
-  const w=window.open();
-  w.document.write(`
-  <h3>SHREE RAM CLINIC</h3>
-  <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qrData}">
-  <p><b>Name:</b> ${r.name}<br><b>Diagnosis:</b> ${r.dx}</p><hr>
-  ${rxHtml}<br><br>
-  <b>Follow-up:</b> ${r.fu||'-'}<br><br>
-  <b>Dr. Ashwini Srivastav</b>
-  `);
-  w.print();
+<div class="header">SHREE RAM CLINIC</div>
+<div class="sub">ADDRESS – BIRRA, CHAMPA<br>General Medicine</div>
+
+<table>
+<tr>
+<td>
+<b>Name:</b> ${r.name}<br>
+<b>Diagnosis:</b> ${r.dx}
+</td>
+<td style="text-align:right">
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qrData}">
+</td>
+</tr>
+</table>
+
+<div class="line"></div>
+
+<b>Rx</b>
+<table>${rxHTML}</table>
+
+<div class="line"></div>
+
+<b>Follow-up:</b> ${r.fu || '-'}
+
+<div class="footer">
+Dr. Ashwini Srivastav
+</div>
+
+</body>
+</html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(),600);
 }
-
-loadRecords();
 </script>
 </body>
-  </html>
+</html>
